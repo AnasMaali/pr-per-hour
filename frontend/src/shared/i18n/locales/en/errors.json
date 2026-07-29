@@ -1,0 +1,20 @@
+{
+  "generic": "An unexpected error occurred.",
+  "network": "Unable to reach the server. Check your connection and try again.",
+  "unauthorized": "You need to sign in to continue.",
+  "forbidden": "You do not have permission to view this page.",
+  "notFound": "The page you requested could not be found.",
+  "notFoundDescription": "Check the address or return to the home page.",
+  "notFoundMetaTitle": "Page not found | PR Per Hour",
+  "notFoundMetaDescription": "This page could not be found.",
+  "unauthorizedTitle": "Access denied",
+  "unauthorizedDescription": "Your account does not have permission for this area.",
+  "validation": "Please review the highlighted fields.",
+  "inactiveAccount": "This account is inactive. Please contact support.",
+  "rateLimited": "Too many requests. Please wait and try again.",
+  "server": "The server encountered an error. Please try again later.",
+  "goHome": "Go to home",
+  "goLogin": "Go to login",
+  "boundaryTitle": "This view failed to load",
+  "boundaryDescription": "Reload the page. If the issue continues, share the request ID with support when available."
+}

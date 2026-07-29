@@ -1,0 +1,110 @@
+.admin-users-page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.admin-users-header h1 {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  letter-spacing: var(--tracking-display);
+}
+
+.admin-users-header p {
+  margin: 0;
+  color: var(--color-text-muted);
+  max-width: 42rem;
+}
+
+.admin-users-filters {
+  display: grid;
+  grid-template-columns: minmax(14rem, 2fr) repeat(2, minmax(10rem, 1fr)) auto;
+  gap: var(--space-4);
+  align-items: end;
+  padding-block: var(--space-2);
+  border-block: 1px solid var(--color-border);
+}
+
+.admin-users-filters__actions,
+.admin-users-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.admin-users-filters__actions .btn {
+  min-height: var(--touch-target);
+}
+
+.admin-users-message {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.admin-users-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.admin-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 880px;
+}
+
+.admin-users-table caption {
+  text-align: start;
+  padding: var(--space-3) var(--space-4);
+  font-weight: 600;
+  caption-side: top;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: start;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.admin-users-table th {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  background: var(--color-surface-muted);
+}
+
+.admin-user-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.admin-user-status--active {
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+  color: var(--color-success);
+}
+
+.admin-user-status--inactive {
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  color: var(--color-danger);
+}
+
+.admin-users-pagination {
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .admin-users-filters {
+    grid-template-columns: 1fr;
+  }
+}

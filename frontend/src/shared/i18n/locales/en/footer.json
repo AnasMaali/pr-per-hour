@@ -1,0 +1,15 @@
+{
+  "description": "Strategic communication and public relations consultancy.",
+  "explore": "Explore",
+  "company": "Company",
+  "account": "Account",
+  "home": "Home",
+  "services": "Services",
+  "about": "About",
+  "approach": "Our approach",
+  "contact": "Contact",
+  "login": "Log in",
+  "register": "Create account",
+  "copyright": "© {{year}} PR Per Hour. All rights reserved.",
+  "rightsNote": "Make every hour count."
+}

@@ -1,0 +1,142 @@
+import { ApiClientError } from '@/shared/api/errors'
+import type { AdminBookingFieldErrors } from '@/features/admin/bookings/types/adminBookings.types'
+
+const FIELD_KEYS = new Set(['status', 'meeting_link', 'notes'])
+
+export interface MappedAdminBookingError {
+  fieldErrors: AdminBookingFieldErrors
+  formMessageKey: string | null
+  formMessage: string | null
+  requestId: string | null
+  errorCode: string | null
+}
+
+function firstMessage(messages: string[] | undefined): string | undefined {
+  return messages?.find((item) => typeof item === 'string' && item.trim() !== '')
+}
+
+export function mapAdminBookingApiError(
+  error: unknown,
+): MappedAdminBookingError {
+  if (!(error instanceof ApiClientError)) {
+    return {
+      fieldErrors: {},
+      formMessageKey: 'errorUnexpected',
+      formMessage: null,
+      requestId: null,
+      errorCode: null,
+    }
+  }
+
+  const { normalized } = error
+  const fieldErrors: AdminBookingFieldErrors = {}
+
+  if (normalized.errors) {
+    for (const [key, messages] of Object.entries(normalized.errors)) {
+      if (!FIELD_KEYS.has(key)) continue
+      const message = firstMessage(messages)
+      if (message) {
+        fieldErrors[key as keyof AdminBookingFieldErrors] = message
+      }
+    }
+  }
+
+  if (normalized.errorCode === 'BOOKING_INVALID_STATUS_TRANSITION') {
+    return {
+      fieldErrors,
+      formMessageKey: 'errorInvalidTransition',
+      formMessage: normalized.message || null,
+      requestId: normalized.requestId,
+      errorCode: normalized.errorCode,
+    }
+  }
+
+  if (normalized.status === 429) {
+    return {
+      fieldErrors,
+      formMessageKey: 'errorRateLimited',
+      formMessage: normalized.message || null,
+      requestId: normalized.requestId,
+      errorCode: normalized.errorCode,
+    }
+  }
+
+  if (normalized.isNetworkError) {
+    return {
+      fieldErrors,
+      formMessageKey: 'errorNetwork',
+      formMessage: null,
+      requestId: normalized.requestId,
+      errorCode: normalized.errorCode,
+    }
+  }
+
+  if (normalized.isUnauthorized || normalized.status === 401) {
+    return {
+      fieldErrors,
+      formMessageKey: 'errorUnauthorized',
+      formMessage: null,
+      requestId: normalized.requestId,
+      errorCode: normalized.errorCode,
+    }
+  }
+
+  if (normalized.isForbidden || normalized.status === 403) {
+    return {
+      fieldErrors,
+      formMessageKey: 'errorForbidden',
+      formMessage: normalized.message || null,
+      requestId: normalized.requestId,
+      errorCode: normalized.errorCode,
+    }
+  }
+
+  if (normalized.status === 404) {
+    return {
+      fieldErrors,
+      formMessageKey: 'errorNotFound',
+      formMessage: null,
+      requestId: normalized.requestId,
+      errorCode: normalized.errorCode,
+    }
+  }
+
+  if (normalized.status === 409) {
+    return {
+      fieldErrors,
+      formMessageKey: 'errorConflict',
+      formMessage: normalized.message || null,
+      requestId: normalized.requestId,
+      errorCode: normalized.errorCode,
+    }
+  }
+
+  if (normalized.isValidationError) {
+    const hasFields = Object.keys(fieldErrors).length > 0
+    return {
+      fieldErrors,
+      formMessageKey: hasFields ? null : 'errorValidation',
+      formMessage: hasFields ? null : normalized.message || null,
+      requestId: normalized.requestId,
+      errorCode: normalized.errorCode,
+    }
+  }
+
+  if (normalized.status !== null && normalized.status >= 500) {
+    return {
+      fieldErrors,
+      formMessageKey: 'errorServer',
+      formMessage: null,
+      requestId: normalized.requestId,
+      errorCode: normalized.errorCode,
+    }
+  }
+
+  return {
+    fieldErrors,
+    formMessageKey: 'errorUnexpected',
+    formMessage: normalized.message || null,
+    requestId: normalized.requestId,
+    errorCode: normalized.errorCode,
+  }
+}

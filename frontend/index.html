@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/jpeg" href="/src/assets/brand/logo.jpeg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="PR Per Hour helps organizations strengthen their reputation, communicate with clarity, and achieve measurable results through strategic communication, public relations, and capacity building."
+    />
+    <meta
+      property="og:title"
+      content="PR Per Hour | Strategic Communication & Public Relations Consultancy"
+    />
+    <meta
+      property="og:description"
+      content="PR Per Hour helps organizations strengthen their reputation, communicate with clarity, and achieve measurable results through strategic communication, public relations, and capacity building."
+    />
+    <meta
+      name="twitter:title"
+      content="PR Per Hour | Strategic Communication & Public Relations Consultancy"
+    />
+    <meta
+      name="twitter:description"
+      content="PR Per Hour helps organizations strengthen their reputation, communicate with clarity, and achieve measurable results through strategic communication, public relations, and capacity building."
+    />
+    <title>
+      PR Per Hour | Strategic Communication &amp; Public Relations Consultancy
+    </title>
+    <script>
+      (function () {
+        try {
+          var THEME_KEY = 'prph.theme'
+          var LOCALE_KEY = 'prph.locale'
+          var storedTheme = localStorage.getItem(THEME_KEY)
+          var resolved =
+            storedTheme === 'light' || storedTheme === 'dark'
+              ? storedTheme
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+          // Normalize legacy "system" / missing values to an explicit Light or Dark.
+          if (storedTheme !== resolved) {
+            localStorage.setItem(THEME_KEY, resolved)
+          }
+          document.documentElement.setAttribute('data-theme', resolved)
+          document.documentElement.setAttribute('data-theme-preference', resolved)
+
+          var storedLocale = localStorage.getItem(LOCALE_KEY)
+          var locale = storedLocale === 'ar' ? 'ar' : 'en'
+          document.documentElement.lang = locale
+          document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light')
+          document.documentElement.setAttribute('data-theme-preference', 'light')
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

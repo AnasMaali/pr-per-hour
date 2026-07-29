@@ -1,0 +1,124 @@
+.admin-dashboard-sidebar__brand {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.admin-dashboard-sidebar__label {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+:lang(ar) .admin-dashboard-sidebar__label {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.admin-dashboard-sidebar__footer {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-dashboard-public-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.admin-dashboard-public-link:hover,
+.admin-dashboard-public-link:focus-visible {
+  color: var(--color-accent);
+  background: var(--color-surface-muted);
+}
+
+.admin-dashboard-public-link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.dashboard-nav-logout {
+  width: 100%;
+  justify-content: flex-start;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.admin-dashboard-identity {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-dashboard-identity__name {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.admin-dashboard-identity__meta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.admin-dashboard-backdrop {
+  display: none;
+}
+
+@media (max-width: 48rem) {
+  .admin-dashboard-layout .admin-dashboard-backdrop,
+  .client-dashboard-layout .admin-dashboard-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-overlay);
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: var(--color-overlay);
+    cursor: pointer;
+  }
+
+  .admin-dashboard-layout .admin-dashboard-sidebar,
+  .client-dashboard-layout .admin-dashboard-sidebar {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: calc(var(--z-overlay) + 1);
+    width: min(18rem, 88vw);
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-105%);
+    transition: transform var(--transition-base);
+    display: flex;
+  }
+
+  html[dir='rtl'] .admin-dashboard-layout .admin-dashboard-sidebar,
+  html[dir='rtl'] .client-dashboard-layout .admin-dashboard-sidebar {
+    transform: translateX(105%);
+  }
+
+  .admin-dashboard-layout .admin-dashboard-sidebar.is-open,
+  .client-dashboard-layout .admin-dashboard-sidebar.is-open {
+    display: flex;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dashboard-layout .admin-dashboard-sidebar,
+  .client-dashboard-layout .admin-dashboard-sidebar {
+    transition: none;
+  }
+}

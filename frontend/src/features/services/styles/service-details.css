@@ -1,0 +1,209 @@
+.service-details-page {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+}
+
+.service-details-container {
+  width: min(100% - 2rem, var(--width-content));
+  margin-inline: auto;
+}
+
+.service-details-hero {
+  position: relative;
+  overflow: hidden;
+  padding-block:
+    calc(var(--header-height) + clamp(1.75rem, 4vw, 3rem))
+    clamp(2.5rem, 5vw, 3.75rem);
+  background:
+    radial-gradient(
+      ellipse 50% 55% at 90% 20%,
+      color-mix(in srgb, var(--color-accent) 12%, transparent),
+      transparent 48%
+    ),
+    var(--color-bg);
+  border-block-end: 1px solid var(--color-border);
+}
+
+html[data-theme='dark'] .service-details-hero {
+  background:
+    radial-gradient(
+      ellipse 50% 55% at 90% 20%,
+      color-mix(in srgb, var(--color-accent) 10%, transparent),
+      transparent 48%
+    ),
+    var(--color-bg);
+}
+
+.service-details-hero__category {
+  margin: 0 0 var(--space-3);
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+:lang(ar) .service-details-hero__category {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.service-details-hero__title {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: var(--leading-tight);
+  max-width: 18ch;
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-display);
+}
+
+.service-details-layout {
+  display: grid;
+  gap: var(--space-8);
+  padding-block: var(--section-space);
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr);
+  align-items: start;
+}
+
+.service-details-content h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  margin: 0 0 var(--space-3);
+}
+
+.service-details-content > p {
+  margin: 0;
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-muted);
+  white-space: pre-wrap;
+  max-width: var(--width-prose);
+}
+
+.service-details-meta {
+  display: grid;
+  gap: var(--space-4);
+  padding: 0 0 var(--space-5);
+  border-block-end: 1px solid var(--color-border);
+  background: transparent;
+}
+
+.service-details-meta h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}
+
+.service-details-meta dl {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.service-details-meta div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.service-details-meta dt {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.service-details-meta dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.service-details-aside {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.service-booking-cta {
+  display: grid;
+  gap: var(--space-4);
+  padding: clamp(1.35rem, 3vw, 1.85rem);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+  background:
+    radial-gradient(circle at 88% 12%, rgb(197 145 18 / 0.18), transparent 42%),
+    var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+html[data-theme='dark'] .service-booking-cta {
+  background:
+    radial-gradient(circle at 88% 12%, rgb(212 168 75 / 0.16), transparent 42%),
+    #182235;
+  color: var(--color-text);
+}
+
+.service-booking-cta h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2vw, 1.45rem);
+}
+
+.service-booking-cta p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+.service-booking-cta__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.service-booking-cta__actions .btn,
+.service-booking-cta__actions a.btn {
+  width: 100%;
+  min-height: var(--touch-target);
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+}
+
+.service-booking-cta__actions .btn {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border-color: transparent;
+}
+
+.service-booking-cta__actions .btn:hover {
+  background: var(--color-accent-hover);
+  color: var(--color-accent-contrast);
+}
+
+.service-booking-cta__actions .btn--secondary {
+  background: transparent;
+  border-color: color-mix(in srgb, currentColor 45%, transparent);
+  color: inherit;
+}
+
+.service-booking-cta__actions .btn--secondary:hover {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  color: inherit;
+}
+
+.service-booking-cta__note {
+  font-size: var(--text-xs);
+  opacity: 0.8;
+}
+
+.service-details-back {
+  margin-top: var(--space-6);
+}
+
+.service-details-state {
+  padding-block: var(--space-16);
+}
+
+@media (max-width: 900px) {
+  .service-details-layout {
+    grid-template-columns: 1fr;
+  }
+}
