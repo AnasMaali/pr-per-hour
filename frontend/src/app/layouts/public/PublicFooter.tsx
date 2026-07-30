@@ -1,167 +1,425 @@
 import { useEffect, useRef, type MouseEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import {
+  ArrowUpRight,
+  ChevronRight,
+  Sparkles,
+} from 'lucide-react'
 import { AppLogo } from '@/shared/components/AppLogo'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useReducedMotion } from '@/shared/motion/hooks/useReducedMotion'
 import { scrollToPageTop } from '@/shared/utils/scrollToHash'
 
 /**
- * Public footer with a subtle homepage-only scroll entrance.
- * GSAP loads only on `/` so other public routes stay free of the scroll chunk.
+ * Premium public footer.
+ * Uses progressive GSAP enhancement while preserving a complete
+ * static experience when motion is disabled or unavailable.
  */
 export function PublicFooter() {
   const { t } = useTranslation(['footer', 'navigation'])
   const { isAuthenticated, isClient, isAdmin } = useAuth()
+
   const year = new Date().getFullYear()
-  const reduced = useReducedMotion()
+  const reducedMotion = useReducedMotion()
   const location = useLocation()
   const navigate = useNavigate()
   const footerRef = useRef<HTMLElement>(null)
-  const isHome = location.pathname === '/'
 
-  const goHome = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (!isHome) return
+  const isHomePage = location.pathname === '/'
+
+  function goHome(event: MouseEvent<HTMLAnchorElement>) {
+    if (!isHomePage) return
+
     event.preventDefault()
+
     if (location.hash) {
       void navigate('/', { replace: true })
     }
+
     scrollToPageTop()
   }
+
   useEffect(() => {
-    if (!isHome || reduced || typeof window === 'undefined') return
+    if (reducedMotion || typeof window === 'undefined') return
+
     const footer = footerRef.current
+
     if (!footer) return
 
     let cancelled = false
-    let revert: (() => void) | undefined
+    let revertAnimation: (() => void) | undefined
 
     void import('@/shared/motion/gsap/registerGsap').then(
       ({ registerGsap, ScrollTrigger }) => {
         if (cancelled || !footerRef.current) return
-        const gsapApi = registerGsap()
+
+        const gsap = registerGsap()
+
+        const cta = footer.querySelector('.public-footer__cta')
         const brand = footer.querySelector('.public-footer__brand')
-        const navGroups = footer.querySelectorAll('.public-footer__nav > div')
-        const divider = footer.querySelector('.public-footer__bottom')
+        const navigationGroups = footer.querySelectorAll(
+          '.public-footer__nav-group',
+        )
+        const bottom = footer.querySelector('.public-footer__bottom')
         const line = footer.querySelector('.public-footer__draw')
+        const ornaments = footer.querySelectorAll(
+          '.public-footer__orb, .public-footer__grid',
+        )
 
-        const ctx = gsapApi.context(() => {
-          gsapApi.set([brand, navGroups], { opacity: 0, y: 18 })
-          gsapApi.set(divider, { opacity: 0, y: 12 })
-          gsapApi.set(line, { scaleX: 0, transformOrigin: 'center' })
+        const context = gsap.context(() => {
+          gsap.set(cta, {
+            opacity: 0,
+            y: 28,
+            scale: 0.985,
+          })
 
-          gsapApi
+          gsap.set(brand, {
+            opacity: 0,
+            y: 22,
+          })
+
+          gsap.set(navigationGroups, {
+            opacity: 0,
+            y: 22,
+          })
+
+          gsap.set(bottom, {
+            opacity: 0,
+            y: 14,
+          })
+
+          gsap.set(line, {
+            scaleX: 0,
+            transformOrigin: 'center',
+          })
+
+          gsap.set(ornaments, {
+            opacity: 0,
+            scale: 0.9,
+          })
+
+          gsap
             .timeline({
               scrollTrigger: {
                 trigger: footer,
-                start: 'top 92%',
-                end: 'top 55%',
-                scrub: 0.45,
+                start: 'top 94%',
+                end: 'top 48%',
+                scrub: 0.55,
                 invalidateOnRefresh: true,
               },
             })
-            .to(line, { scaleX: 1, duration: 0.35 }, 0)
-            .to(brand, { opacity: 1, y: 0, duration: 0.3 }, 0.05)
             .to(
-              navGroups,
-              { opacity: 1, y: 0, stagger: 0.08, duration: 0.28 },
-              0.12,
+              ornaments,
+              {
+                opacity: 1,
+                scale: 1,
+                stagger: 0.08,
+                duration: 0.4,
+              },
+              0,
             )
-            .to(divider, { opacity: 1, y: 0, duration: 0.28 }, 0.35)
+            .to(
+              line,
+              {
+                scaleX: 1,
+                duration: 0.35,
+              },
+              0,
+            )
+            .to(
+              cta,
+              {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.4,
+              },
+              0.05,
+            )
+            .to(
+              brand,
+              {
+                opacity: 1,
+                y: 0,
+                duration: 0.32,
+              },
+              0.16,
+            )
+            .to(
+              navigationGroups,
+              {
+                opacity: 1,
+                y: 0,
+                stagger: 0.08,
+                duration: 0.3,
+              },
+              0.2,
+            )
+            .to(
+              bottom,
+              {
+                opacity: 1,
+                y: 0,
+                duration: 0.3,
+              },
+              0.4,
+            )
         }, footer)
 
-        const refreshId = window.requestAnimationFrame(() => {
+        const refreshFrame = window.requestAnimationFrame(() => {
           ScrollTrigger.refresh()
         })
 
-        revert = () => {
-          window.cancelAnimationFrame(refreshId)
-          ctx.revert()
+        revertAnimation = () => {
+          window.cancelAnimationFrame(refreshFrame)
+          context.revert()
         }
       },
     )
 
     return () => {
       cancelled = true
-      revert?.()
+      revertAnimation?.()
     }
-  }, [isHome, reduced])
+  }, [location.pathname, reducedMotion])
 
   return (
     <footer
       ref={footerRef}
       className="public-footer"
-      data-home-motion={isHome && !reduced ? 'true' : undefined}
+      data-motion={!reducedMotion ? 'enabled' : undefined}
     >
-      <div className="public-footer__draw" aria-hidden="true" />
-      <div className="public-footer__inner">
-        <div className="public-footer__brand">
-          <AppLogo showTagline />
-          <p>{t('footer:description')}</p>
+      <div
+        className="public-footer__grid"
+        aria-hidden="true"
+      />
+
+      <div
+        className="public-footer__orb public-footer__orb--one"
+        aria-hidden="true"
+      />
+
+      <div
+        className="public-footer__orb public-footer__orb--two"
+        aria-hidden="true"
+      />
+
+      <div
+        className="public-footer__draw"
+        aria-hidden="true"
+      />
+
+      <div className="public-footer__container">
+        <section
+          className="public-footer__cta"
+          aria-labelledby="footer-cta-title"
+        >
+          <div className="public-footer__cta-content">
+            <p className="public-footer__eyebrow">
+              <Sparkles
+                aria-hidden="true"
+                size={17}
+                strokeWidth={1.8}
+              />
+
+              <span>{t('footer:rightsNote')}</span>
+            </p>
+
+            <h2 id="footer-cta-title">
+              {t('footer:description')}
+            </h2>
+          </div>
+
+          <div className="public-footer__cta-actions">
+            <Link
+              className="public-footer__primary-action"
+              to="/contact"
+            >
+              <span>{t('footer:contact')}</span>
+
+              <ArrowUpRight
+                aria-hidden="true"
+                size={18}
+              />
+            </Link>
+
+            <Link
+              className="public-footer__secondary-action"
+              to="/services"
+            >
+              <span>{t('footer:services')}</span>
+
+              <ChevronRight
+                className="public-footer__direction-icon"
+                aria-hidden="true"
+                size={18}
+              />
+            </Link>
+          </div>
+        </section>
+
+        <div className="public-footer__inner">
+          <div className="public-footer__brand">
+            <AppLogo showTagline />
+
+            <p className="public-footer__description">
+              {t('footer:description')}
+            </p>
+
+            <p className="public-footer__brand-note">
+              {t('footer:rightsNote')}
+            </p>
+          </div>
+
+          <nav
+            className="public-footer__nav"
+            aria-label={t('footer:explore')}
+          >
+            <div className="public-footer__nav-group">
+              <h2>{t('footer:explore')}</h2>
+
+              <ul>
+                <li>
+                  <Link to="/" onClick={goHome}>
+                    <span>{t('footer:home')}</span>
+
+                    <ChevronRight
+                      className="public-footer__direction-icon"
+                      aria-hidden="true"
+                      size={16}
+                    />
+                  </Link>
+                </li>
+
+                <li>
+                  <Link to="/services">
+                    <span>{t('footer:services')}</span>
+
+                    <ChevronRight
+                      className="public-footer__direction-icon"
+                      aria-hidden="true"
+                      size={16}
+                    />
+                  </Link>
+                </li>
+
+                <li>
+                  <Link to={{ pathname: '/', hash: '#about' }}>
+                    <span>{t('footer:about')}</span>
+
+                    <ChevronRight
+                      className="public-footer__direction-icon"
+                      aria-hidden="true"
+                      size={16}
+                    />
+                  </Link>
+                </li>
+
+                <li>
+                  <Link to={{ pathname: '/', hash: '#approach' }}>
+                    <span>{t('footer:approach')}</span>
+
+                    <ChevronRight
+                      className="public-footer__direction-icon"
+                      aria-hidden="true"
+                      size={16}
+                    />
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div className="public-footer__nav-group">
+              <h2>{t('footer:company')}</h2>
+
+              <ul>
+                <li>
+                  <Link to="/contact">
+                    <span>{t('footer:contact')}</span>
+
+                    <ChevronRight
+                      className="public-footer__direction-icon"
+                      aria-hidden="true"
+                      size={16}
+                    />
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div className="public-footer__nav-group">
+              <h2>{t('footer:account')}</h2>
+
+              <ul>
+                {!isAuthenticated ? (
+                  <>
+                    <li>
+                      <Link to="/login">
+                        <span>{t('footer:login')}</span>
+
+                        <ChevronRight
+                          className="public-footer__direction-icon"
+                          aria-hidden="true"
+                          size={16}
+                        />
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link to="/register">
+                        <span>{t('footer:register')}</span>
+
+                        <ChevronRight
+                          className="public-footer__direction-icon"
+                          aria-hidden="true"
+                          size={16}
+                        />
+                      </Link>
+                    </li>
+                  </>
+                ) : null}
+
+                {isClient ? (
+                  <li>
+                    <Link to="/dashboard">
+                      <span>{t('navigation:myAccount')}</span>
+
+                      <ChevronRight
+                        className="public-footer__direction-icon"
+                        aria-hidden="true"
+                        size={16}
+                      />
+                    </Link>
+                  </li>
+                ) : null}
+
+                {isAdmin ? (
+                  <li>
+                    <Link to="/admin">
+                      <span>{t('navigation:adminDashboard')}</span>
+
+                      <ChevronRight
+                        className="public-footer__direction-icon"
+                        aria-hidden="true"
+                        size={16}
+                      />
+                    </Link>
+                  </li>
+                ) : null}
+              </ul>
+            </div>
+          </nav>
         </div>
 
-        <nav className="public-footer__nav" aria-label={t('footer:explore')}>
-          <div>
-            <h2>{t('footer:explore')}</h2>
-            <ul>
-              <li>
-                <Link to="/" onClick={goHome}>
-                  {t('footer:home')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/services">{t('footer:services')}</Link>
-              </li>
-              <li>
-                <Link to={{ pathname: '/', hash: '#about' }}>
-                  {t('footer:about')}
-                </Link>
-              </li>
-              <li>
-                <Link to={{ pathname: '/', hash: '#approach' }}>
-                  {t('footer:approach')}
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h2>{t('footer:company')}</h2>
-            <ul>
-              <li>
-                <Link to="/contact">{t('footer:contact')}</Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h2>{t('footer:account')}</h2>
-            <ul>
-              {!isAuthenticated ? (
-                <>
-                  <li>
-                    <Link to="/login">{t('footer:login')}</Link>
-                  </li>
-                  <li>
-                    <Link to="/register">{t('footer:register')}</Link>
-                  </li>
-                </>
-              ) : null}
-              {isClient ? (
-                <li>
-                  <Link to="/dashboard">{t('navigation:myAccount')}</Link>
-                </li>
-              ) : null}
-              {isAdmin ? (
-                <li>
-                  <Link to="/admin">{t('navigation:adminDashboard')}</Link>
-                </li>
-              ) : null}
-            </ul>
-          </div>
-        </nav>
-      </div>
-      <div className="public-footer__bottom">
-        <p>{t('footer:copyright', { year })}</p>
-        <p>{t('footer:rightsNote')}</p>
+        <div className="public-footer__bottom">
+          <p>{t('footer:copyright', { year })}</p>
+
+          <p className="public-footer__bottom-note">
+            <span aria-hidden="true" />
+            {t('footer:rightsNote')}
+          </p>
+        </div>
       </div>
     </footer>
   )
