@@ -13,22 +13,38 @@ export function AuthLayout() {
   return (
     <div className="auth-layout">
       <SkipLink />
+
       <header className="auth-layout__header">
-        <AppLogo />
-        <div className="header-controls">
-          <LanguageSwitcher />
-          <ThemeSwitcher />
-          <Link className="btn btn--ghost" to="/">
-            {t('auth:backHome')}
-          </Link>
+        <div className="auth-layout__header-top">
+          <div className="auth-layout__brand">
+            <AppLogo />
+          </div>
+
+          <div className="auth-layout__preferences">
+            <LanguageSwitcher />
+            <ThemeSwitcher />
+          </div>
         </div>
+
+        <Link
+          className="btn btn--ghost auth-layout__back-home"
+          to="/"
+        >
+          {t('auth:backHome')}
+        </Link>
       </header>
-      <main id="main-content" className="auth-layout__main" tabIndex={-1}>
+
+      <main
+        id="main-content"
+        className="auth-layout__main"
+        tabIndex={-1}
+      >
         <div className="auth-layout__grid">
           <AuthBenefitsPanel />
           <Outlet />
         </div>
       </main>
+
       <footer className="auth-layout__footer">
         <p>{t('common:footerNote')}</p>
       </footer>

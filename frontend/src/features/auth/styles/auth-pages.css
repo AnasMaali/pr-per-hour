@@ -21,27 +21,69 @@ html[data-theme='dark'] .auth-layout {
     var(--color-bg);
 }
 
+/* ==========================================================================
+   Authentication header
+   ========================================================================== */
+
 .auth-layout__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  width: min(100% - 2rem, var(--width-content));
+  min-height: var(--header-height);
+  margin-inline: auto;
+  padding-block: var(--space-4);
+}
+
+.auth-layout__header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  width: min(100% - 2rem, var(--width-content));
-  margin-inline: auto;
-  padding-block: var(--space-4);
-  min-height: var(--header-height);
+  min-width: 0;
 }
 
-.auth-layout__header .header-controls {
+.auth-layout__brand {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.auth-layout__brand .app-logo {
+  max-width: 100%;
+}
+
+.auth-layout__preferences {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: var(--space-2);
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+}
+
+.auth-layout__preferences > * {
+  min-width: 0;
+  flex: 0 0 auto;
 }
 
 .auth-layout__header .btn {
   min-height: var(--touch-target);
 }
+
+.auth-layout__back-home {
+  width: fit-content;
+  min-height: var(--touch-target);
+  justify-self: end;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Authentication layout
+   ========================================================================== */
 
 .auth-layout__main {
   flex: 1;
@@ -104,9 +146,19 @@ html[data-theme='dark'] .auth-layout {
 
 .auth-form-error {
   padding: var(--space-3) var(--space-4);
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--color-danger, #b42318) 35%,
+      var(--color-border)
+    );
   border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--color-danger, #b42318) 35%, var(--color-border));
-  background: color-mix(in srgb, var(--color-danger, #b42318) 8%, var(--color-surface));
+  background:
+    color-mix(
+      in srgb,
+      var(--color-danger, #b42318) 8%,
+      var(--color-surface)
+    );
   outline: none;
 }
 
@@ -116,20 +168,20 @@ html[data-theme='dark'] .auth-layout {
 
 .auth-form-error__meta {
   margin-top: var(--space-2);
-  font-size: var(--text-sm);
   color: var(--color-text-muted);
+  font-size: var(--text-sm);
 }
 
 .auth-switch {
   margin: 0;
-  font-size: var(--text-sm);
   color: var(--color-text-muted);
+  font-size: var(--text-sm);
 }
 
 .auth-switch a {
+  color: var(--color-primary);
   font-weight: 600;
   text-decoration: none;
-  color: var(--color-primary);
 }
 
 .auth-switch a:hover,
@@ -150,12 +202,12 @@ html[data-theme='dark'] .auth-layout {
 }
 
 .auth-forgot a {
-  font-weight: 600;
-  text-decoration: none;
-  color: var(--color-primary);
-  min-height: var(--touch-target);
   display: inline-flex;
   align-items: center;
+  min-height: var(--touch-target);
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .auth-forgot a:hover,
@@ -173,17 +225,32 @@ html[data-theme='dark'] .auth-layout {
 .auth-status {
   margin: 0;
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface));
+  border-radius: var(--radius-md);
+  background:
+    color-mix(
+      in srgb,
+      var(--color-primary) 6%,
+      var(--color-surface)
+    );
   color: var(--color-text);
   font-size: var(--text-sm);
   line-height: var(--leading-relaxed);
 }
 
 .auth-status {
-  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  border-color:
+    color-mix(
+      in srgb,
+      var(--color-accent) 35%,
+      var(--color-border)
+    );
+  background:
+    color-mix(
+      in srgb,
+      var(--color-accent) 10%,
+      var(--color-surface)
+    );
 }
 
 .auth-actions-row {
@@ -193,16 +260,16 @@ html[data-theme='dark'] .auth-layout {
 
 .auth-text-button {
   appearance: none;
+  min-height: var(--touch-target);
+  margin: 0;
+  padding: 0;
   border: 0;
   background: transparent;
-  padding: 0;
-  margin: 0;
+  color: var(--color-primary);
   font: inherit;
   font-weight: 600;
-  color: var(--color-primary);
-  cursor: pointer;
   text-decoration: none;
-  min-height: var(--touch-target);
+  cursor: pointer;
 }
 
 .auth-text-button:hover,
@@ -215,6 +282,10 @@ html[data-theme='dark'] .auth-layout {
   outline: none;
   box-shadow: var(--focus-ring);
 }
+
+/* ==========================================================================
+   OTP
+   ========================================================================== */
 
 .otp-field {
   display: grid;
@@ -238,18 +309,23 @@ html[data-theme='dark'] .auth-layout {
   color: var(--color-text);
   font-size: var(--text-lg);
   font-weight: 600;
-  text-align: center;
   font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 .otp-field__digit:focus-visible {
+  border-color: var(--color-primary);
   outline: none;
   box-shadow: var(--focus-ring);
-  border-color: var(--color-primary);
 }
 
 .otp-field__digit--error {
-  border-color: color-mix(in srgb, var(--color-danger, #b42318) 55%, var(--color-border));
+  border-color:
+    color-mix(
+      in srgb,
+      var(--color-danger, #b42318) 55%,
+      var(--color-border)
+    );
 }
 
 .otp-field__digit:disabled {
@@ -257,14 +333,18 @@ html[data-theme='dark'] .auth-layout {
   cursor: not-allowed;
 }
 
+/* ==========================================================================
+   Password
+   ========================================================================== */
+
 .password-rules {
-  margin: calc(var(--space-2) * -1) 0 0;
-  padding: 0;
-  list-style: none;
   display: grid;
   gap: var(--space-1);
-  font-size: var(--text-sm);
+  margin: calc(var(--space-2) * -1) 0 0;
+  padding: 0;
   color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  list-style: none;
 }
 
 .password-rules__item {
@@ -276,31 +356,6 @@ html[data-theme='dark'] .auth-layout {
 
 .password-rules__item--met {
   color: var(--color-text);
-}
-
-.turnstile-field {
-  display: grid;
-  gap: var(--space-2);
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.turnstile-field__widget {
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.turnstile-field__widget iframe {
-  max-width: 100% !important;
-}
-
-.turnstile-field__status {
-  margin: 0;
-  min-height: 1.25rem;
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
 }
 
 .password-field {
@@ -333,14 +388,52 @@ html[data-theme='dark'] .auth-layout {
 
 .password-field__toggle:hover,
 .password-field__toggle:focus-visible {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-primary) 8%,
+      transparent
+    );
   color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 
 .password-field__toggle:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
+
+/* ==========================================================================
+   Turnstile
+   ========================================================================== */
+
+.turnstile-field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.turnstile-field__widget {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.turnstile-field__widget iframe {
+  max-width: 100% !important;
+}
+
+.turnstile-field__status {
+  min-height: 1.25rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* ==========================================================================
+   Benefits panel
+   ========================================================================== */
 
 .auth-benefits {
   position: relative;
@@ -349,10 +442,19 @@ html[data-theme='dark'] .auth-layout {
   align-content: center;
   gap: var(--space-4);
   padding: clamp(1.5rem, 3vw, 2.25rem);
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--color-accent) 28%,
+      var(--color-border)
+    );
   border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
   background:
-    radial-gradient(circle at 100% 0%, rgb(197 145 18 / 0.16), transparent 45%),
+    radial-gradient(
+      circle at 100% 0%,
+      rgb(197 145 18 / 0.16),
+      transparent 45%
+    ),
     var(--color-primary);
   color: var(--color-primary-contrast);
   box-shadow: var(--shadow-md);
@@ -360,7 +462,11 @@ html[data-theme='dark'] .auth-layout {
 
 html[data-theme='dark'] .auth-benefits {
   background:
-    radial-gradient(circle at 100% 0%, rgb(212 168 75 / 0.16), transparent 45%),
+    radial-gradient(
+      circle at 100% 0%,
+      rgb(212 168 75 / 0.16),
+      transparent 45%
+    ),
     #182235;
   color: var(--color-text);
 }
@@ -380,25 +486,29 @@ html[data-theme='dark'] .auth-benefits {
 }
 
 .auth-benefits__title {
+  max-width: 16ch;
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.5rem, 2.4vw, 2rem);
-  max-width: 16ch;
   letter-spacing: var(--tracking-display);
 }
 
 .auth-benefits__lead {
   margin: 0;
-  opacity: 0.9;
   line-height: var(--leading-relaxed);
+  opacity: 0.9;
 }
 
 .auth-benefits__list {
-  margin: 0;
-  padding-inline-start: 1.1rem;
   display: grid;
   gap: var(--space-2);
+  margin: 0;
+  padding-inline-start: 1.1rem;
 }
+
+/* ==========================================================================
+   Unauthorized page
+   ========================================================================== */
 
 .auth-unauthorized {
   width: min(100% - 2rem, 32rem);
@@ -412,15 +522,9 @@ html[data-theme='dark'] .auth-benefits {
   gap: var(--space-3);
 }
 
-@media (max-width: 360px) {
-  .otp-field__inputs {
-    gap: var(--space-1);
-  }
-
-  .otp-field__digit {
-    font-size: var(--text-base);
-  }
-}
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
 
 @media (max-width: 860px) {
   .auth-layout__grid {
@@ -433,6 +537,78 @@ html[data-theme='dark'] .auth-benefits {
 }
 
 @media (max-width: 640px) {
+  .auth-layout__header {
+    grid-template-columns: 1fr;
+    width: 100%;
+    min-height: auto;
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+    padding-right:
+      max(1.25rem, env(safe-area-inset-right));
+    padding-bottom: var(--space-4);
+    padding-left:
+      max(1.25rem, env(safe-area-inset-left));
+  }
+
+  .auth-layout__header-top {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    width: 100%;
+    gap: var(--space-3);
+  }
+
+  .auth-layout__brand {
+    justify-content: center;
+    width: 100%;
+    overflow: visible;
+  }
+
+  .auth-layout__brand .app-logo {
+    max-width: min(100%, 18rem);
+  }
+
+  .auth-layout__preferences {
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .auth-layout__preferences > * {
+    max-width: 100%;
+  }
+
+  .auth-layout__preferences button {
+    min-height: var(--touch-target);
+  }
+
+  .auth-layout__back-home {
+    width: 100%;
+    max-width: 18rem;
+    justify-self: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .auth-layout__main {
+    width: 100%;
+    padding:
+      var(--space-5)
+      max(1.25rem, env(safe-area-inset-right))
+      var(--space-8)
+      max(1.25rem, env(safe-area-inset-left));
+  }
+
+  .auth-layout__grid {
+    gap: var(--space-5);
+  }
+
+  .auth-card,
+  .auth-benefits {
+    padding: var(--space-5);
+  }
+
   .auth-unauthorized__actions {
     flex-direction: column;
   }
@@ -442,6 +618,43 @@ html[data-theme='dark'] .auth-benefits {
     justify-content: center;
   }
 }
+
+@media (max-width: 360px) {
+  .auth-layout__header {
+    padding-right:
+      max(1rem, env(safe-area-inset-right));
+    padding-left:
+      max(1rem, env(safe-area-inset-left));
+  }
+
+  .auth-layout__preferences {
+    gap: var(--space-1);
+  }
+
+  .auth-layout__main {
+    padding-right:
+      max(1rem, env(safe-area-inset-right));
+    padding-left:
+      max(1rem, env(safe-area-inset-left));
+  }
+
+  .auth-card,
+  .auth-benefits {
+    padding: var(--space-4);
+  }
+
+  .otp-field__inputs {
+    gap: var(--space-1);
+  }
+
+  .otp-field__digit {
+    font-size: var(--text-base);
+  }
+}
+
+/* ==========================================================================
+   Reduced motion
+   ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
   .password-field__toggle {
