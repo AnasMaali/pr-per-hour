@@ -225,3 +225,49 @@ p {
     display: none;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Global mobile page spacing
+   Keeps text and content safely away from screen edges.
+   -------------------------------------------------------------------------- */
+
+   @media (max-width: 48rem) {
+    .app-main,
+    .dashboard-main {
+      width: 100%;
+      max-width: 100%;
+      margin-inline: auto;
+      padding-inline:
+        max(1.25rem, env(safe-area-inset-left))
+        max(1.25rem, env(safe-area-inset-right));
+    }
+
+    .app-main {
+      padding-block: var(--space-6);
+    }
+
+    .dashboard-main {
+      padding-block: var(--space-5);
+    }
+
+    .app-main h1,
+    .app-main h2,
+    .app-main h3,
+    .app-main p,
+    .dashboard-main h1,
+    .dashboard-main h2,
+    .dashboard-main h3,
+    .dashboard-main p {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  @media (max-width: 22rem) {
+    .app-main,
+    .dashboard-main {
+      padding-inline:
+        max(1rem, env(safe-area-inset-left))
+        max(1rem, env(safe-area-inset-right));
+    }
+  }
