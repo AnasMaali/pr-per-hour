@@ -1,11 +1,7 @@
 import { useEffect, useRef, type MouseEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import {
-  ArrowUpRight,
-  ChevronRight,
-  Sparkles,
-} from 'lucide-react'
+import { ArrowUpRight, ChevronRight } from 'lucide-react'
 import { AppLogo } from '@/shared/components/AppLogo'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useReducedMotion } from '@/shared/motion/hooks/useReducedMotion'
@@ -216,15 +212,6 @@ export function PublicFooter() {
           aria-labelledby="footer-cta-title"
         >
           <div className="public-footer__cta-content">
-            <p className="public-footer__eyebrow">
-              <Sparkles
-                aria-hidden="true"
-                size={17}
-                strokeWidth={1.8}
-              />
-
-              <span>{t('footer:rightsNote')}</span>
-            </p>
 
             <h2 id="footer-cta-title">
               {t('footer:description')}
@@ -261,14 +248,10 @@ export function PublicFooter() {
 
         <div className="public-footer__inner">
           <div className="public-footer__brand">
-            <AppLogo showTagline />
+          <AppLogo showTagline={false} />
 
             <p className="public-footer__description">
               {t('footer:description')}
-            </p>
-
-            <p className="public-footer__brand-note">
-              {t('footer:rightsNote')}
             </p>
           </div>
 
