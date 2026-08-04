@@ -118,7 +118,7 @@ return [
 'inquiries' => [
     'address' => env(
         'CONTACT_INQUIRY_TO_ADDRESS',
-        'prperhour@gmail.com',
+        'info@prperhour.com',
     ),
     'name' => env(
         'CONTACT_INQUIRY_TO_NAME',
