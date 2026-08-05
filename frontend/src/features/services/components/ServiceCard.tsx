@@ -1,6 +1,7 @@
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import type { CSSProperties } from 'react'
+import { ArrowUpRight, Clock3 } from 'lucide-react'
 import type { PublicService } from '@/features/services/types/services.types'
 import {
   formatServiceDuration,
@@ -10,21 +11,31 @@ import { cn } from '@/shared/utils/cn'
 
 interface ServiceCardProps {
   service: PublicService
+  index?: number
+  showCategory?: boolean
   className?: string
   style?: CSSProperties
 }
 
 /**
- * Editorial service row. Accepts className/style for StaggerGroup.
- * Price is intentionally not presented (payments disabled).
+ * Modern service card used inside category pages.
+ * Price is intentionally not presented while payments are disabled.
  */
-export function ServiceCard({ service, className, style }: ServiceCardProps) {
+export function ServiceCard({
+  service,
+  index,
+  showCategory = true,
+  className,
+  style,
+}: ServiceCardProps) {
   const { t } = useTranslation('services')
   const description = truncateText(service.description)
+
   const hasDuration =
     service.duration_minutes !== null &&
     service.duration_minutes !== undefined &&
     Number.isFinite(service.duration_minutes)
+
   const duration = hasDuration
     ? formatServiceDuration(
         service.duration_minutes,
@@ -33,28 +44,73 @@ export function ServiceCard({ service, className, style }: ServiceCardProps) {
       )
     : null
 
+  const displayNumber = String(
+    index ?? service.id,
+  ).padStart(2, '0')
+
+  const detailsPath = `/services/${service.slug}`
+
   return (
-    <article className={cn('service-card', className)} style={style}>
-      <div className="service-card__body">
-        {service.category ? (
-          <p className="service-card__category">{service.category.name}</p>
-        ) : null}
-        <h3>
-          <Link to={`/services/${service.slug}`}>{service.title}</Link>
-        </h3>
-        {description ? (
-          <p className="service-card__description">{description}</p>
-        ) : null}
+    <article
+      className={cn('service-card', className)}
+      style={style}
+    >
+      <div className="service-card__header">
+        <span
+          className="service-card__number"
+          aria-hidden="true"
+        >
+          {displayNumber}
+        </span>
+
         {duration ? (
-          <p className="service-card__duration">
-            <span className="visually-hidden">{t('durationMetaLabel')}: </span>
+          <span className="service-card__duration">
+            <Clock3
+              aria-hidden="true"
+              size={15}
+              strokeWidth={1.8}
+            />
+
+            <span className="visually-hidden">
+              {t('durationMetaLabel')}:
+            </span>
+
             {duration}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="service-card__body">
+        {showCategory && service.category ? (
+          <p className="service-card__category">
+            {service.category.name}
+          </p>
+        ) : null}
+
+        <h3>
+          <Link to={detailsPath}>
+            {service.title}
+          </Link>
+        </h3>
+
+        {description ? (
+          <p className="service-card__description">
+            {description}
           </p>
         ) : null}
       </div>
-      <Link className="service-card__link" to={`/services/${service.slug}`}>
-        {t('viewDetails')}
-        <span aria-hidden="true"> →</span>
+
+      <Link
+        className="service-card__link"
+        to={detailsPath}
+      >
+        <span>{t('viewDetails')}</span>
+
+        <ArrowUpRight
+          aria-hidden="true"
+          size={18}
+          strokeWidth={1.9}
+        />
       </Link>
     </article>
   )

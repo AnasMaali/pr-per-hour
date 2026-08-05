@@ -9,11 +9,11 @@ import { useDocumentMeta } from '@/shared/hooks/useDocumentMeta'
 import { ServiceCard } from '@/features/services/components/ServiceCard'
 import { ServicesGridSkeleton } from '@/features/services/components/ServicesGridSkeleton'
 import { ServicesPagination } from '@/features/services/components/ServicesPagination'
-import { ServicesToolbar } from '@/features/services/components/ServicesToolbar'
 import { usePublicCategoriesQuery } from '@/features/services/queries/usePublicCategoriesQuery'
 import { usePublicServicesQuery } from '@/features/services/queries/usePublicServicesQuery'
 import type { ServiceFiltersState } from '@/features/services/types/services.types'
 import {
+  DEFAULT_PER_PAGE,
   filtersToSearchParams,
   parseFiltersFromSearchParams,
   validateServiceFilters,
@@ -242,9 +242,7 @@ export function ServicesPage() {
                 {t('categoriesTitle')}
               </h2>
 
-              <p>
-                {t('categoriesLead')}
-              </p>
+              <p>{t('categoriesLead')}</p>
             </div>
 
             {categoriesQuery.isPending ? (
@@ -356,7 +354,15 @@ export function ServicesPage() {
           aria-labelledby="services-results-heading"
         >
           <div className="services-container">
-            <div className="services-category-heading">
+            <h2
+              id="services-results-heading"
+              className="visually-hidden"
+              tabIndex={-1}
+            >
+              {t('categoryServicesLabel')}
+            </h2>
+
+            <div className="services-category-toolbar">
               <Link
                 className="services-category-back"
                 to="/services"
@@ -365,22 +371,18 @@ export function ServicesPage() {
                 <span>{t('backToCategories')}</span>
               </Link>
 
-              {selectedCategory ? (
-                <>
-                  <p className="services-category-heading__eyebrow">
+              {categoryReady ? (
+                <div className="services-category-toolbar__summary">
+                  <span>
                     {t('categoryServicesLabel')}
-                  </p>
+                  </span>
 
-                  <h2>
-                    {selectedCategory.name}
-                  </h2>
-
-                  {selectedCategory.description ? (
-                    <p>
-                      {selectedCategory.description}
-                    </p>
-                  ) : null}
-                </>
+                  <strong>
+                    {t('resultsCount', {
+                      count: total,
+                    })}
+                  </strong>
+                </div>
               ) : null}
             </div>
 
@@ -411,13 +413,6 @@ export function ServicesPage() {
 
             {categoryReady ? (
               <>
-                <ServicesToolbar
-                  filters={urlFilters}
-                  total={total}
-                  currentPage={currentPage}
-                  lastPage={lastPage}
-                />
-
                 {filtersValid &&
                 servicesQuery.isPending ? (
                   <ServicesGridSkeleton />
@@ -454,12 +449,21 @@ export function ServicesPage() {
                 services.length > 0 ? (
                   <>
                     <StaggerGroup className="services-grid">
-                      {services.map((service) => (
-                        <ServiceCard
-                          key={service.id}
-                          service={service}
-                        />
-                      ))}
+                      {services.map(
+                        (service, index) => (
+                          <ServiceCard
+                            key={service.id}
+                            service={service}
+                            index={
+                              (currentPage - 1) *
+                                DEFAULT_PER_PAGE +
+                              index +
+                              1
+                            }
+                            showCategory={false}
+                          />
+                        ),
+                      )}
                     </StaggerGroup>
 
                     <ServicesPagination
