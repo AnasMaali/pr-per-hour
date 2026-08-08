@@ -47,11 +47,22 @@ class V2FoundationTest extends TestCase
         );
     }
 
+    public function test_advanced_scheduling_is_in_development(): void
+    {
+        $this->assertSame(
+            'development',
+            config('v2.modules.advanced_scheduling.status')
+        );
+
+        $this->assertFalse(
+            config('v2.modules.advanced_scheduling.enabled')
+        );
+    }
+
     public function test_unapproved_modules_remain_proposed(): void
     {
         $proposedModules = [
             'consultants',
-            'advanced_scheduling',
             'roles_permissions',
             'crm',
             'leads',

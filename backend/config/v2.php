@@ -33,6 +33,22 @@ return [
     |
     */
 
+    'bookings' => [
+        'calendar_mode' => env('V2_BOOKING_CALENDAR_MODE', 'shared'),
+        'default_calendar_slug' => env(
+            'V2_BOOKING_DEFAULT_CALENDAR_SLUG',
+            'pr-per-hour-shared'
+        ),
+        'default_calendar_timezone' => env(
+            'V2_BOOKING_DEFAULT_CALENDAR_TIMEZONE',
+            'Asia/Hebron'
+        ),
+        'slot_step_minutes' => (int) env(
+            'V2_BOOKING_SLOT_STEP_MINUTES',
+            30
+        ),
+    ],
+
     'modules' => [
 
         'payments' => [
@@ -52,7 +68,7 @@ return [
 
         'advanced_scheduling' => [
             'enabled' => env('V2_ADVANCED_SCHEDULING_ENABLED', false),
-            'status' => 'proposed',
+            'status' => 'development',
         ],
 
         'roles_permissions' => [

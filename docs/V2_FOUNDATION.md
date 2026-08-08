@@ -198,3 +198,50 @@ This keeps upgrades and deployments safe.
 Build only what the business needs.
 
 Prepare the architecture for growth, but do not implement unnecessary complexity before a feature is approved.
+
+---
+
+## Scalability First
+
+All Version 2 architecture must be designed for future change.
+
+A current business rule must not be hard-coded as a permanent architectural limitation.
+
+For example:
+
+Current:
+- One shared booking calendar
+
+Possible future:
+- Multiple consultants
+- Multiple calendars
+- Consultant-specific availability
+- Service-specific resources
+- External calendar integrations
+
+The initial implementation should remain simple while keeping clear extension points for future requirements.
+
+---
+
+## Database Completeness Rule
+
+During V2 development, the existing database schema must be reviewed continuously.
+
+If a missing table, relationship, column, index, or domain entity is discovered:
+
+1. Explain why it is needed.
+2. Explain what problem it solves.
+3. Explain how it relates to the existing schema.
+4. Consider future scalability.
+5. Obtain approval before adding it.
+6. Implement the change through a new migration.
+
+Do not avoid a necessary database improvement simply to preserve the original V1 schema.
+
+At the same time, do not add speculative database structures without a real requirement.
+
+The goal is:
+
+Simple now.
+Correct now.
+Expandable later.
