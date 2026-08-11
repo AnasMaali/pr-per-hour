@@ -75,12 +75,26 @@ final class AvailableSlotGenerator
                     continue;
                 }
 
-                $slots[] = [
-                    'start_time' => $this->fromMinutes($start),
-                    'end_time' => $this->fromMinutes($end),
+                $startTime = $this->fromMinutes($start);
+                $endTime = $this->fromMinutes($end);
+                $key = $startTime.'-'.$endTime;
+
+                $slots[$key] = [
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
                 ];
             }
         }
+
+        $slots = array_values($slots);
+
+        usort(
+            $slots,
+            static fn (array $a, array $b): int =>
+                [$a['start_time'], $a['end_time']]
+                <=>
+                [$b['start_time'], $b['end_time']]
+        );
 
         return $slots;
     }

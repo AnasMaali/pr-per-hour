@@ -12,12 +12,20 @@ use App\Features\Bookings\V2\DTOs\CreateBookingData;
 use App\Features\ServiceCategories\Models\ServiceCategory;
 use App\Features\Services\Models\Service;
 use App\Features\Users\Models\User;
+use Database\Seeders\V2\BookingCalendarSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 final class CreateBookingTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(BookingCalendarSeeder::class);
+    }
 
     private function service(int $duration = 60): Service
     {
@@ -61,6 +69,37 @@ final class CreateBookingTest extends TestCase
             'status' => 'pending',
         ]);
     }
+
+    public function test_v2_booking_is_assigned_to_default_calendar(): void
+    {
+        $user = User::factory()->create();
+        $service = $this->service(60);
+
+        $data = new CreateBookingData(
+            userId: $user->id,
+            serviceId: $service->id,
+            bookingDate: now()->addDays(3)->toDateString(),
+            startTime: '13:00:00',
+            notes: null,
+        );
+
+        $booking = app(CreateBooking::class)->execute($data);
+
+        $this->assertDatabaseHas('booking_calendar_assignments', [
+            'booking_id' => $booking->id,
+        ]);
+
+        $this->assertDatabaseHas('booking_calendar_assignments', [
+            'booking_id' => $booking->id,
+            'calendar_id' => \App\Features\Bookings\V2\Models\BookingCalendar::query()
+                ->where(
+                    'slug',
+                    config('v2.bookings.default_calendar_slug')
+                )
+                ->value('id'),
+        ]);
+    }
+
 
     public function test_v2_rejects_overlapping_booking(): void
     {

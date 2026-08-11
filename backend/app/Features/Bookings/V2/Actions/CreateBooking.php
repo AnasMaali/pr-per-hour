@@ -8,8 +8,10 @@ use App\Enums\BookingStatus;
 use App\Features\Bookings\Exceptions\BookingDomainException;
 use App\Features\Bookings\Models\Booking;
 use App\Features\Bookings\V2\DTOs\CreateBookingData;
+use App\Features\Bookings\V2\Models\BookingCalendarAssignment;
 use App\Features\Bookings\V2\Support\BookingConflictDetector;
 use App\Features\Bookings\V2\Support\BookingTimeCalculator;
+use App\Features\Bookings\V2\Support\DefaultBookingCalendarResolver;
 use App\Features\Services\Models\Service;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -19,6 +21,7 @@ final class CreateBooking
     public function __construct(
         private readonly BookingTimeCalculator $timeCalculator,
         private readonly BookingConflictDetector $conflictDetector,
+        private readonly DefaultBookingCalendarResolver $calendarResolver,
     ) {}
 
     public function execute(CreateBookingData $data): Booking
@@ -73,6 +76,13 @@ final class CreateBooking
             $booking->status = BookingStatus::Pending;
             $booking->meeting_link = null;
             $booking->save();
+
+            $calendar = $this->calendarResolver->resolve();
+
+            BookingCalendarAssignment::query()->create([
+                'booking_id' => $booking->id,
+                'calendar_id' => $calendar->id,
+            ]);
 
             return $booking->load(['service.category']);
         });
