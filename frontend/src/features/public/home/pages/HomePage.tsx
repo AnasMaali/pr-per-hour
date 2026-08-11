@@ -27,7 +27,38 @@ export function HomePage() {
   useDocumentMeta({
     title: t('metaTitle'),
     description: t('metaDescription'),
+    canonicalPath: '/',
     robots: 'index, follow',
+    structuredData: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'PR Per Hour',
+        alternateName: [
+          'PRPerHour',
+          'PR PerHour',
+          'PRPERHOUR',
+          'prperhour',
+          'prperhour.com',
+          'بي آر بير أور',
+          'بي ار بير اور',
+        ],
+        url: 'https://prperhour.com/',
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'PR Per Hour',
+        alternateName: [
+          'PRPerHour',
+          'PRPERHOUR',
+          'prperhour',
+          'بي آر بير أور',
+          'بي ار بير اور',
+        ],
+        url: 'https://prperhour.com/',
+      },
+    ],
     syncThemeColor: true,
   })
 
