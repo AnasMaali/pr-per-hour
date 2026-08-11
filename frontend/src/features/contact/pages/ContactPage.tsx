@@ -16,6 +16,7 @@ export function ContactPage() {
   useDocumentMeta({
     title: t('metaTitle'),
     description: t('metaDescription'),
+    canonicalPath: '/contact',
     robots: 'index, follow',
     syncThemeColor: true,
   })
