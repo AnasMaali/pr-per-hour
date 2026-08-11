@@ -39,7 +39,11 @@ export function ServiceDetailsPage() {
       ? t('detailsMetaTitle', { title: service.title })
       : t('metaTitle'),
     description: metaDescription,
-    robots: 'index, follow',
+    canonicalPath:
+      !isNotFound && slug
+        ? `/services/${encodeURIComponent(slug)}`
+        : undefined,
+    robots: isNotFound ? 'noindex, follow' : 'index, follow',
     syncThemeColor: true,
   })
 

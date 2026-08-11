@@ -93,6 +93,7 @@ export function ServicesPage() {
   useDocumentMeta({
     title: pageTitle,
     description: pageDescription,
+    canonicalPath: '/services',
     robots: 'index, follow',
     syncThemeColor: true,
   })
