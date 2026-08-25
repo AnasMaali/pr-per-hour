@@ -757,3 +757,178 @@ html[data-theme='dark'] .home-contact__stage {
 .final-cta__actions .btn {
   min-height: var(--touch-target);
 }
+
+/* ——— Leadership: scalable executive profiles ——— */
+
+.home-leadership__header {
+  display: grid;
+  gap: var(--space-3);
+  margin-block-end: clamp(2rem, 5vw, 3.5rem);
+  max-width: 48rem;
+}
+
+.home-leadership__header h2 {
+  margin: 0;
+  max-width: 20ch;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 3vw, 2.75rem);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-display);
+}
+
+.home-leadership__header > p:last-child {
+  margin: 0;
+  max-width: 44rem;
+  color: var(--color-text-muted);
+  line-height: var(--leading-relaxed);
+}
+
+.home-leadership__layout {
+  display: grid;
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .home-leadership__layout {
+    grid-template-columns:
+      minmax(16rem, 0.72fr)
+      minmax(0, 1.28fr);
+  }
+}
+
+.home-leadership__visual {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: clamp(1.5rem, 4vw, 2.75rem);
+  overflow: hidden;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--brand-navy) 80%,
+      var(--color-border)
+    );
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(
+      circle at 32% 28%,
+      rgb(197 145 18 / 0.15),
+      transparent 52%
+    ),
+    var(--brand-navy);
+  box-shadow: var(--shadow-md);
+}
+
+.home-leadership__mark {
+  width: min(72%, 16rem);
+  max-width: 100%;
+  color: #fff;
+  filter: drop-shadow(
+    0 3px 10px rgb(0 0 0 / 0.28)
+  );
+}
+
+.home-leadership__profiles {
+  display: grid;
+  border-block-start: 1px solid var(--color-border);
+}
+
+.home-leadership__profile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: clamp(1rem, 3vw, 1.75rem);
+  padding-block: clamp(1.5rem, 3vw, 2.25rem);
+  border-block-end: 1px solid var(--color-border);
+}
+
+.home-leadership__profile-index {
+  padding-block-start: 0.3rem;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: var(--tracking-label);
+}
+
+.home-leadership__profile-copy {
+  min-width: 0;
+}
+
+.home-leadership__profile h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  line-height: var(--leading-snug);
+}
+
+.home-leadership__role {
+  margin: var(--space-2) 0 0;
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+:lang(ar) .home-leadership__role {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.home-leadership__bio {
+  margin: var(--space-4) 0 0;
+  max-width: 46rem;
+  color: var(--color-text-muted);
+  line-height: var(--leading-relaxed);
+}
+
+.home-leadership__points {
+  list-style: none;
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(14rem, 1fr)
+  );
+  gap: var(--space-3) var(--space-5);
+}
+
+.home-leadership__points li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  line-height: var(--leading-snug);
+}
+
+.home-leadership__credential-mark {
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-block-start: 0.45rem;
+  flex-shrink: 0;
+  border-radius: 1px;
+  background: var(--color-accent);
+}
+
+.home-leadership__cta {
+  width: fit-content;
+  margin-block-start: var(--space-6);
+}
+
+@media (max-width: 640px) {
+  .home-leadership__profile {
+    grid-template-columns: 1fr;
+  }
+
+  .home-leadership__points {
+    grid-template-columns: 1fr;
+  }
+
+  .home-leadership__cta {
+    width: 100%;
+    justify-content: center;
+  }
+}

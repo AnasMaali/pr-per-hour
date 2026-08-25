@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ServiceCategorySeeder::class,
+            ServiceCatalogSeeder::class,
         ]);
 
         if (filled(env('PR_ADMIN_PASSWORD'))) {

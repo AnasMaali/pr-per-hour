@@ -45,7 +45,7 @@
   "trustedLead": "شركاء مختارون عبر الاتصال والعلاقات العامة وبناء القدرات.",
   "trustedLogoLabel": "شعار المؤسسة {{index}}",
   "founderEyebrow": "القيادة",
-  "founderTitle": "المؤسس والمستشار الرئيسي",
+  "founderTitle": "المؤسِّسة والمستشارة الرئيسية",
   "founderBio": "ممارس وأكاديمي ملتزم بمساعدة المؤسسات على التواصل بوضوح وتعزيز السمعة وتحقيق نتائج قابلة للقياس في العلاقات العامة.",
   "founderPoint1": "دكتوراه في العلاقات العامة والإعلان.",
   "founderPoint2": "مستشار اتصال استراتيجي.",
@@ -82,5 +82,16 @@
   "contactPhone": "+970 593486465",
   "contactLinkedIn": "https://www.linkedin.com/",
   "contactLinkedInText": "PR Per Hour على لينكدإن",
-  "contactChannelsHeading": "قنوات التواصل"
+  "contactChannelsHeading": "قنوات التواصل",
+  "leadershipEyebrow": "القيادة",
+  "leadershipTitle": "خبرات تجمع بين الاستراتيجية والتكنولوجيا",
+  "leadershipLead": "تجمع PR Per Hour بين خبرات الاتصال الاستراتيجي والقيادة التقنية لمساعدة المؤسسات على تطوير تواصلها وفهم بياناتها وبناء حلول أكثر ذكاءً.",
+  "technologyLeaderName": "Anas Maali",
+  "technologyLeaderRole": "رئيس قسم التكنولوجيا",
+  "technologyLeaderBio": "يقود الجانب التقني في PR Per Hour ويشرف على تحليل البيانات والذكاء الاصطناعي والأنظمة البرمجية والحلول الرقمية وتطوير حلول تقنية مخصصة لاحتياجات العملاء.",
+  "technologyLeaderPoint1": "تحليل البيانات وذكاء الأعمال.",
+  "technologyLeaderPoint2": "الذكاء الاصطناعي والأتمتة.",
+  "technologyLeaderPoint3": "البرمجيات والحلول الرقمية.",
+  "technologyLeaderPoint4": "الاستراتيجية التقنية.",
+  "founderName": "فاتنة معالي"
 }

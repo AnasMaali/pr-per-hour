@@ -187,17 +187,18 @@ final class ClientSchemaParityTest extends TestCase
         $this->assertFalse(Schema::hasColumn('chat_messages', 'deleted_at'));
     }
 
-    public function test_category_seeder_is_idempotent_and_seeds_exactly_three(): void
+    public function test_category_seeder_is_idempotent_and_seeds_expected_categories(): void
     {
         $this->seed(ServiceCategorySeeder::class);
         $this->seed(ServiceCategorySeeder::class);
 
-        $this->assertSame(3, ServiceCategory::query()->count());
+        $this->assertSame(4, ServiceCategory::query()->count());
         $this->assertSame(
             [
                 'strategic-communication',
                 'public-relations-campaigns',
                 'training-capacity-building',
+                'data-ai-technology',
             ],
             ServiceCategory::query()->orderBy('id')->pluck('slug')->all(),
         );
