@@ -7,11 +7,6 @@ namespace Database\Seeders;
 use App\Features\ServiceCategories\Models\ServiceCategory;
 use Illuminate\Database\Seeder;
 
-/**
- * Seeds the three initial categories from the client handoff SQL seed data.
- * Note: PR_Per_Hour_SQL.txt (schema-only export) does not include INSERT statements;
- * names/slugs/descriptions match the authoritative handoff seed block for these categories.
- */
 class ServiceCategorySeeder extends Seeder
 {
     /**
@@ -33,19 +28,33 @@ class ServiceCategorySeeder extends Seeder
             'slug' => 'training-capacity-building',
             'description' => 'Training programs for communication teams, leaders, spokespersons, and corporate professionals.',
         ],
+        [
+            'name' => 'Data, AI & Technology',
+            'slug' => 'data-ai-technology',
+            'description' => 'Data-driven, AI-powered, and digital solutions that help organizations understand information, improve operations, automate workflows, and make better business decisions.',
+        ],
     ];
 
     public function run(): void
     {
-        foreach (self::CATEGORIES as $category) {
-            ServiceCategory::query()->updateOrCreate(
-                ['slug' => $category['slug']],
-                [
-                    'name' => $category['name'],
-                    'description' => $category['description'],
+        foreach (self::CATEGORIES as $categoryData) {
+            $category = ServiceCategory::withTrashed()
+                ->where('slug', $categoryData['slug'])
+                ->first();
+
+            if ($category === null) {
+                ServiceCategory::query()->create([
+                    ...$categoryData,
                     'is_active' => true,
-                ],
-            );
+                ]);
+
+                continue;
+            }
+
+            // Keep operational state such as active/deleted status unchanged.
+            $category->name = $categoryData['name'];
+            $category->description = $categoryData['description'];
+            $category->save();
         }
     }
 }

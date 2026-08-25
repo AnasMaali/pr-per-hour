@@ -4,7 +4,7 @@ import { AboutUsSection } from '@/features/public/home/components/AboutUsSection
 import { ExpertiseSection } from '@/features/public/home/components/ExpertiseSection'
 import { ApproachSection } from '@/features/public/home/components/ApproachSection'
 import { TrustedOrganizationsSection } from '@/features/public/home/components/TrustedOrganizationsSection'
-import { FounderSection } from '@/features/public/home/components/FounderSection'
+import { LeadershipSection } from '@/features/public/home/components/LeadershipSection'
 import { WhyPrPerHourSection } from '@/features/public/home/components/WhyPrPerHourSection'
 import { FinalCtaSection } from '@/features/public/home/components/FinalCtaSection'
 import { ContactSection } from '@/features/public/home/components/ContactSection'
@@ -70,7 +70,7 @@ export function HomePage() {
       <ExpertiseSection />
       <ApproachSection />
       <TrustedOrganizationsSection />
-      <FounderSection />
+      <LeadershipSection />
       <WhyPrPerHourSection />
       <FinalCtaSection />
       <ContactSection />
