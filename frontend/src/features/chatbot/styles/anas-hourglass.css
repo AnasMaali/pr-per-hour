@@ -1,0 +1,141 @@
+.anas-hourglass {
+  display: block;
+  overflow: visible;
+  color: var(--color-text);
+}
+
+.anas-hourglass__glow {
+  fill: var(--color-accent);
+  opacity: 0.32;
+  transform-box: view-box;
+  transform-origin: 50px 70px;
+}
+
+.anas-hourglass__frame {
+  transform-box: view-box;
+  transform-origin: 50px 70px;
+}
+
+.anas-hourglass__strut {
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.anas-hourglass__cap {
+  fill: var(--color-accent);
+}
+
+.anas-hourglass__spin {
+  transform-box: view-box;
+  transform-origin: 50px 70px;
+  transform: rotate(0deg);
+}
+
+.anas-hourglass__glass {
+  fill: color-mix(in srgb, var(--color-surface) 18%, transparent);
+  stroke: currentColor;
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+
+.anas-hourglass__sand {
+  fill: var(--color-accent);
+}
+
+.anas-hourglass__sand--top {
+  opacity: 0.92;
+}
+
+.anas-hourglass__sand--bottom {
+  opacity: 0.78;
+}
+
+.anas-hourglass__stream {
+  stroke: var(--color-accent);
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-dasharray: 1.6 3.2;
+}
+
+/* Idle: the sand keeps a restrained, continuous trickle + soft breathing glow. */
+@media (prefers-reduced-motion: no-preference) {
+  .anas-hourglass:not(.anas-hourglass--reduced) .anas-hourglass__stream {
+    animation: anas-hourglass-flow 900ms linear infinite;
+  }
+
+  .anas-hourglass:not(.anas-hourglass--reduced) .anas-hourglass__glow {
+    animation: anas-hourglass-breathe 5200ms ease-in-out infinite;
+  }
+
+  .anas-hourglass--thinking:not(.anas-hourglass--reduced) .anas-hourglass__glow {
+    animation-duration: 2400ms;
+  }
+
+  .anas-hourglass--thinking:not(.anas-hourglass--reduced) .anas-hourglass__spin {
+    animation: anas-hourglass-flip 4200ms cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  .anas-hourglass--success:not(.anas-hourglass--reduced) .anas-hourglass__glow {
+    animation: anas-hourglass-flash 700ms ease-out;
+  }
+}
+
+.anas-hourglass--opening .anas-hourglass__spin {
+  transform: rotate(180deg);
+  transition: transform 620ms var(--ease-cinematic, ease);
+}
+
+.anas-hourglass--reduced .anas-hourglass__spin {
+  transition: none;
+  animation: none;
+}
+
+.anas-hourglass--reduced .anas-hourglass__stream,
+.anas-hourglass--reduced .anas-hourglass__glow {
+  animation: none;
+}
+
+@keyframes anas-hourglass-flow {
+  to {
+    stroke-dashoffset: -4.8;
+  }
+}
+
+@keyframes anas-hourglass-breathe {
+  0%,
+  100% {
+    opacity: 0.26;
+  }
+  50% {
+    opacity: 0.46;
+  }
+}
+
+@keyframes anas-hourglass-flip {
+  0%,
+  38% {
+    transform: rotate(0deg);
+  }
+  50%,
+  88% {
+    transform: rotate(180deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes anas-hourglass-flash {
+  0% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 0.65;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}

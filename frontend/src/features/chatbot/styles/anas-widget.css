@@ -1,0 +1,12 @@
+.anas-widget-root {
+  /* Positioning lives on the launcher/panel themselves (fixed). */
+  display: contents;
+}
+
+/* Performance: freeze every continuous CSS animation while the tab is
+   backgrounded, instead of letting idle sand/glow/float loops keep ticking
+   in a browser process nobody is looking at. */
+.anas-widget-root[data-tab-hidden] *,
+.anas-widget-root[data-tab-hidden] {
+  animation-play-state: paused !important;
+}

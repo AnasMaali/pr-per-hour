@@ -8,6 +8,7 @@ import { ThemeSwitcher } from '@/shared/components/ThemeSwitcher'
 import { SkipLink } from '@/shared/components/SkipLink'
 import { Button } from '@/shared/components/Button'
 import { useAuth } from '@/features/auth/AuthProvider'
+import { AnasChatWidget } from '@/features/chatbot'
 import { env } from '@/shared/config/env'
 import '@/app/layouts/admin-dashboard-layout.css'
 
@@ -262,6 +263,8 @@ export function ClientDashboardLayout() {
           <Outlet />
         </main>
       </div>
+
+      <AnasChatWidget />
     </div>
   )
 }

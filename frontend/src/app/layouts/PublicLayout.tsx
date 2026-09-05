@@ -3,6 +3,7 @@ import { SkipLink } from '@/shared/components/SkipLink'
 import { PublicFooter } from '@/app/layouts/public/PublicFooter'
 import { PublicHeader } from '@/app/layouts/public/PublicHeader'
 import { RouteTransition } from '@/shared/motion'
+import { AnasChatWidget } from '@/features/chatbot'
 import { cn } from '@/shared/utils/cn'
 import '@/app/layouts/public/public-layout.css'
 import '@/shared/motion/styles/motion.css'
@@ -31,6 +32,8 @@ export function PublicLayout() {
       </main>
 
       <PublicFooter />
+
+      <AnasChatWidget />
     </div>
   )
 }
