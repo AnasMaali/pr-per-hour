@@ -43,6 +43,10 @@ final class FeatureApiRouteRegistrar
                 'path' => 'app/Features/Bookings/routes/api.php',
                 'enabled' => (bool) config('features.bookings', false),
             ],
+            'Chatbot' => [
+                'path' => 'app/Features/Chatbot/routes/api.php',
+                'enabled' => (bool) config('features.chatbot', false),
+            ],
         ];
     }
 

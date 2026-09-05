@@ -7,7 +7,7 @@
       "warn",
       {
         "allowConstantExport": true,
-        "allowExportNames": ["useTheme", "useAuth", "router"]
+        "allowExportNames": ["useTheme", "useAuth", "router", "renderWithProviders"]
       }
     ]
   }

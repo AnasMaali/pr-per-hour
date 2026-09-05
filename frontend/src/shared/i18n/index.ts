@@ -97,15 +97,22 @@ const bookingBundle =
     ? await import('@/shared/i18n/bookingNamespaces')
     : null
 
+const chatbotBundle =
+  import.meta.env.VITE_FEATURE_CHATBOT_ENABLED === 'true'
+    ? await import('@/shared/i18n/chatbotNamespaces')
+    : null
+
 void i18n.use(initReactI18next).init({
   resources: {
     en: {
       ...enCore,
       ...(bookingBundle?.bookingResources.en ?? {}),
+      ...(chatbotBundle?.chatbotResources.en ?? {}),
     },
     ar: {
       ...arCore,
       ...(bookingBundle?.bookingResources.ar ?? {}),
+      ...(chatbotBundle?.chatbotResources.ar ?? {}),
     },
   },
   lng: initialLocale,
@@ -114,6 +121,7 @@ void i18n.use(initReactI18next).init({
   ns: [
     ...coreNamespaces,
     ...(bookingBundle?.bookingNamespaceNames ?? []),
+    ...(chatbotBundle?.chatbotNamespaceNames ?? []),
   ],
   interpolation: {
     escapeValue: false,

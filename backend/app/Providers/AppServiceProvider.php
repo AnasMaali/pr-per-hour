@@ -6,6 +6,8 @@ namespace App\Providers;
 
 use App\Features\Bookings\Models\Booking;
 use App\Features\Bookings\Policies\BookingPolicy;
+use App\Features\Chatbot\Contracts\ChatProvider;
+use App\Features\Chatbot\Providers\ChatProviderManager;
 use App\Features\ContactMessages\Models\ContactMessage;
 use App\Features\ContactMessages\Policies\ContactMessagePolicy;
 use App\Features\ServiceCategories\Models\ServiceCategory;
@@ -24,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->bind(ChatProvider::class, ChatProviderManager::class);
     }
 
     public function boot(): void
@@ -68,7 +70,10 @@ class AppServiceProvider extends ServiceProvider
             $max = (int) config('api.rate_limits.chatbot', 20);
 
             return Limit::perMinute($max)->by(
-                (string) ($request->user()?->getAuthIdentifier() ?: $request->ip()),
+                (string) (
+                    $request->user('sanctum')?->getAuthIdentifier()
+                    ?: $request->ip()
+                ),
             );
         });
 
