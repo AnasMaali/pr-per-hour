@@ -100,6 +100,51 @@ final class AnasResponseQualityGuardTest extends TestCase
         $this->assertSame($text, $result->text);
     }
 
+    /**
+     * Found via a real manual benchmark run against production Groq output:
+     * the model code-switched the English word "real-time" into an
+     * otherwise-Arabic sentence. The fix must replace it with the Arabic
+     * phrasing, not the English one — substituting English into Arabic text
+     * would "fix" the overclaim while leaving the exact kind of broken
+     * code-switching this guard exists to prevent.
+     */
+    public function test_softens_an_english_realtime_phrase_embedded_in_an_arabic_sentence_with_arabic_text(): void
+    {
+        $result = $this->guard->evaluate('هل يمكن أن تكون اللوحة real-time؟ لا يمكن ضمان ذلك.');
+
+        $this->assertTrue($result->accepted);
+        $this->assertStringNotContainsString('real-time', strtolower($result->text));
+        $this->assertStringContainsString('بحسب آلية تحديث وربط البيانات المتاحة', $result->text);
+        $this->assertContains('unsupported_realtime_claim', $result->issues);
+    }
+
+    public function test_softens_bare_arabic_live_data_claim(): void
+    {
+        $result = $this->guard->evaluate('يعتمد النظام على بيانات حية لضمان الدقة.');
+
+        $this->assertTrue($result->accepted);
+        $this->assertStringNotContainsString('بيانات حية', $result->text);
+        $this->assertContains('unsupported_realtime_claim', $result->issues);
+    }
+
+    /**
+     * Also found via the manual benchmark: a model stating the same
+     * overclaim twice right next to each other (an Arabic phrase followed
+     * by its own English gloss in parentheses) had both phrases matched
+     * and replaced independently, leaving an awkward "<phrase> (<phrase>)"
+     * duplicate. The guard must collapse that back to one occurrence.
+     */
+    public function test_collapses_a_duplicated_replacement_left_by_a_bilingual_restatement(): void
+    {
+        $result = $this->guard->evaluate('لا يمكن ضمان تحديث البيانات بشكل لحظي (real-time) تلقائيًا.');
+
+        $this->assertTrue($result->accepted);
+        $this->assertSame(
+            1,
+            substr_count($result->text, 'بحسب آلية تحديث وربط البيانات المتاحة'),
+        );
+    }
+
     // -----------------------------------------------------------------
     // Unexpected script (homoglyph) detection
     // -----------------------------------------------------------------
@@ -185,5 +230,100 @@ final class AnasResponseQualityGuardTest extends TestCase
 
         $this->assertFalse($result->accepted);
         $this->assertContains('blank_response', $result->issues);
+    }
+
+    // -----------------------------------------------------------------
+    // Canonical leadership name normalization
+    // -----------------------------------------------------------------
+
+    public function test_correct_arabic_anas_maali_spelling_is_left_unchanged(): void
+    {
+        $text = 'مسؤول التكنولوجيا في PR Per Hour هو أنس معالي.';
+
+        $result = $this->guard->evaluate($text);
+
+        $this->assertTrue($result->accepted);
+        $this->assertSame($text, $result->text);
+        $this->assertNotContains('canonical_name_normalized', $result->issues);
+    }
+
+    public function test_correct_arabic_fatina_maali_spelling_is_left_unchanged(): void
+    {
+        $text = 'المؤسسة والمستشارة الرئيسية هي فاتنة معالي.';
+
+        $result = $this->guard->evaluate($text);
+
+        $this->assertTrue($result->accepted);
+        $this->assertSame($text, $result->text);
+        $this->assertNotContains('canonical_name_normalized', $result->issues);
+    }
+
+    public function test_normalizes_anas_maali_corrupted_as_anas_mali(): void
+    {
+        $result = $this->guard->evaluate('مسؤول التكنولوجيا هو أناس مالي.');
+
+        $this->assertTrue($result->accepted);
+        $this->assertStringContainsString('أنس معالي', $result->text);
+        $this->assertStringNotContainsString('أناس مالي', $result->text);
+        $this->assertContains('canonical_name_normalized', $result->issues);
+    }
+
+    public function test_normalizes_anas_maali_corrupted_as_ans_mali(): void
+    {
+        $result = $this->guard->evaluate('مسؤول التكنولوجيا هو أنس مالي.');
+
+        $this->assertTrue($result->accepted);
+        $this->assertStringContainsString('أنس معالي', $result->text);
+        $this->assertStringNotContainsString('أنس مالي', $result->text);
+        $this->assertContains('canonical_name_normalized', $result->issues);
+    }
+
+    public function test_normalizes_anas_maali_corrupted_as_anas_maali_extra_alif(): void
+    {
+        $result = $this->guard->evaluate('مسؤول التكنولوجيا هو أناس معالي.');
+
+        $this->assertTrue($result->accepted);
+        $this->assertStringContainsString('أنس معالي', $result->text);
+        $this->assertStringNotContainsString('أناس معالي', $result->text);
+        $this->assertContains('canonical_name_normalized', $result->issues);
+    }
+
+    public function test_normalizes_fatina_maali_corrupted_as_fatina_mali(): void
+    {
+        $result = $this->guard->evaluate('المؤسسة هي فاتنا مالي.');
+
+        $this->assertTrue($result->accepted);
+        $this->assertStringContainsString('فاتنة معالي', $result->text);
+        $this->assertStringNotContainsString('فاتنا مالي', $result->text);
+        $this->assertContains('canonical_name_normalized', $result->issues);
+    }
+
+    public function test_normalizes_fatina_maali_corrupted_as_fatina_mali_alt_transliteration(): void
+    {
+        $result = $this->guard->evaluate('المؤسسة هي فاتينا مالي.');
+
+        $this->assertTrue($result->accepted);
+        $this->assertStringContainsString('فاتنة معالي', $result->text);
+        $this->assertStringNotContainsString('فاتينا مالي', $result->text);
+        $this->assertContains('canonical_name_normalized', $result->issues);
+    }
+
+    public function test_english_canonical_names_are_never_altered(): void
+    {
+        $text = 'Anas Maali is the Head of Technology, and Fatina Maali is the Founder & Principal Consultant.';
+
+        $result = $this->guard->evaluate($text);
+
+        $this->assertTrue($result->accepted);
+        $this->assertSame($text, $result->text);
+        $this->assertNotContains('canonical_name_normalized', $result->issues);
+    }
+
+    public function test_canonical_name_normalization_preserves_surrounding_markdown(): void
+    {
+        $result = $this->guard->evaluate('مسؤول التكنولوجيا هو **أناس مالي**، وهو يقود فريق البيانات.');
+
+        $this->assertTrue($result->accepted);
+        $this->assertStringContainsString('**أنس معالي**', $result->text);
     }
 }

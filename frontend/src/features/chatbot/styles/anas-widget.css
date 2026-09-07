@@ -10,3 +10,87 @@
 .anas-widget-root[data-tab-hidden] {
   animation-play-state: paused !important;
 }
+
+/* ---------- Instant-open shell ----------
+   Intentionally duplicated (not shared with) anas-panel.css's `.anas-panel`
+   geometry: this file is on the eager bundle so the shell is fully styled
+   the instant the launcher is clicked, before the AnasPanel chunk (and its
+   own CSS) has loaded. Keep this geometry visually in sync with
+   `.anas-panel` in anas-panel.css so swapping from shell to real panel
+   never jumps. */
+.anas-panel-shell {
+  position: fixed;
+  inset-inline-end: clamp(0.75rem, 3vw, 1.75rem);
+  inset-block-end: calc(env(safe-area-inset-bottom, 0px) + clamp(0.75rem, 3vw, 1.5rem));
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  width: min(420px, calc(100vw - 1.5rem));
+  height: min(680px, calc(100dvh - 6rem));
+  max-height: calc(100dvh - 6rem);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-depth);
+  border: 1px solid var(--color-border);
+}
+
+@media (max-width: 640px) {
+  .anas-panel-shell {
+    inset-inline: 0;
+    inset-block-end: 0;
+    inset-block-start: max(env(safe-area-inset-top, 0px), 2.75rem);
+    width: 100%;
+    height: auto;
+    max-height: none;
+    border-start-start-radius: var(--radius-xl);
+    border-start-end-radius: var(--radius-xl);
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+    border: 0;
+    border-block-start: 1px solid var(--color-border);
+  }
+}
+
+.anas-panel-shell__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: linear-gradient(160deg, var(--brand-navy), var(--brand-navy-deep));
+  color: var(--brand-paper);
+  flex-shrink: 0;
+}
+
+.anas-panel-shell__mark {
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.3));
+}
+
+.anas-panel-shell__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.anas-panel-shell__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  line-height: 1.15;
+}
+
+.anas-panel-shell__role {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: color-mix(in srgb, var(--brand-paper) 78%, transparent);
+}
+
+.anas-panel-shell__body {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  background: var(--color-surface);
+}

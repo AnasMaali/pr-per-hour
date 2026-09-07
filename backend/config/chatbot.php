@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     'assistant' => [
-        'name' => 'Anas',
+        'name' => 'PRIA AI',
     ],
 
     /*
@@ -13,7 +13,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | The chatbot must never depend directly on one AI vendor.
-    | "fallback" keeps Anas operational without an external provider.
+    | "fallback" keeps PRIA AI operational without an external provider.
     |
     */
     'ai' => [
@@ -37,6 +37,21 @@ return [
         'timeout_seconds' => (int) env(
             'CHATBOT_AI_TIMEOUT_SECONDS',
             10,
+        ),
+
+        // Groq's documented "instruct / non-thinking" defaults for the Qwen3
+        // family (qwen3.6-27b and qwen3.8-27b alike): temperature 0.7,
+        // top_p 0.80. Kept configurable per environment rather than
+        // hard-coded, since a future model swap may recommend different
+        // values.
+        'temperature' => (float) env(
+            'CHATBOT_AI_TEMPERATURE',
+            0.7,
+        ),
+
+        'top_p' => (float) env(
+            'CHATBOT_AI_TOP_P',
+            0.8,
         ),
     ],
 
@@ -69,10 +84,17 @@ return [
 
         'description' => 'PR Per Hour is a strategic communication, public relations, training, data, AI, and technology consultancy.',
 
+        // Canonical bilingual leadership names. The model must never be
+        // trusted to transliterate these itself (it has previously produced
+        // "أناس مالي" and "فاتنا مالي"), so both exact forms are supplied
+        // here and echoed verbatim in the system prompt's CANONICAL NAMES
+        // rule, with AnasResponseQualityGuard as a deterministic backstop.
         'leadership' => [
             [
-                'name' => 'Fatina Maali',
+                'name_en' => 'Fatina Maali',
+                'name_ar' => 'فاتنة معالي',
                 'role' => 'Founder & Principal Consultant',
+                'role_ar' => 'المؤسس والمستشار الرئيسي',
                 'expertise' => [
                     'Public Relations & Advertising',
                     'Strategic Communication',
@@ -81,8 +103,10 @@ return [
                 ],
             ],
             [
-                'name' => 'Anas Maali',
+                'name_en' => 'Anas Maali',
+                'name_ar' => 'أنس معالي',
                 'role' => 'Head of Technology',
+                'role_ar' => 'رئيس قسم التكنولوجيا',
                 'expertise' => [
                     'Data Analytics & Business Intelligence',
                     'Artificial Intelligence & Automation',

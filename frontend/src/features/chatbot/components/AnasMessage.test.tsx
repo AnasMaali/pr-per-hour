@@ -68,7 +68,7 @@ describe('AnasMessage', () => {
 
   it('keeps an Arabic reply containing the brand name, a URL, and an email rtl/ar', () => {
     const message =
-      'أهلاً! أنا Anas من PR Per Hour. يمكنك زيارة https://prperhour.com أو مراسلتنا عبر info@prperhour.com.'
+      'أهلاً! أنا PRIA AI من PR Per Hour. يمكنك زيارة https://prperhour.com أو مراسلتنا عبر info@prperhour.com.'
 
     renderWithProviders(<AnasMessage message={assistantMessage(message)} reducedMotion />)
 
@@ -95,7 +95,7 @@ describe('AnasMessage', () => {
 
     // The author marker follows the UI locale (English test i18n), not the
     // Arabic message body, and carries no message-specific dir/lang.
-    const author = screen.getByText('Anas')
+    const author = screen.getByText('PRIA AI')
     expect(author).not.toHaveAttribute('dir')
     expect(author).not.toHaveAttribute('lang')
   })

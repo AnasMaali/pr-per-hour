@@ -20,5 +20,7 @@ final readonly class ChatProviderRequest
         public string $model,
         public int $maxOutputTokens,
         public int $timeoutSeconds,
+        public float $temperature = 0.7,
+        public float $topP = 0.8,
     ) {}
 }

@@ -81,8 +81,9 @@ final class PrPerHourKnowledgeBuilder
 
         foreach (($company['leadership'] ?? []) as $leader) {
             $lines[] = sprintf(
-                '- %s — %s',
-                $leader['name'] ?? '',
+                '- %s (Arabic: %s) — %s',
+                $leader['name_en'] ?? '',
+                $leader['name_ar'] ?? '',
                 $leader['role'] ?? '',
             );
 

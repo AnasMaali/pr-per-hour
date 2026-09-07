@@ -332,6 +332,31 @@
   line-height: 1.9;
 }
 
+.anas-message__caret {
+  display: inline-block;
+  margin-inline-start: 0.1em;
+  color: var(--color-accent-hover);
+  font-weight: 400;
+  vertical-align: baseline;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .anas-message__caret--blink {
+    animation: anas-caret-blink 1000ms step-end infinite;
+  }
+}
+
+@keyframes anas-caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
 /* ---------- Markdown (Anas replies only) ---------- */
 
 /* react-markdown renders a plain React element tree — no raw HTML from the

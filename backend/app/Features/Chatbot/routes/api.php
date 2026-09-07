@@ -26,4 +26,11 @@ Route::prefix('chatbot')
         )
             ->where('conversationToken', '[A-Za-z0-9_-]+')
             ->name('api.v1.chatbot.messages.store');
+
+        Route::post(
+            '/conversations/{conversationToken}/messages/stream',
+            [PublicChatbotController::class, 'streamMessage'],
+        )
+            ->where('conversationToken', '[A-Za-z0-9_-]+')
+            ->name('api.v1.chatbot.messages.stream');
     });

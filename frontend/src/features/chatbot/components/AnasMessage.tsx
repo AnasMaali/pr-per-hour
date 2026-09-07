@@ -3,6 +3,7 @@ import { AnasHourglass } from '@/features/chatbot/components/AnasHourglass'
 import { AnasMarkdown } from '@/features/chatbot/components/AnasMarkdown'
 import { renderMessageContent } from '@/features/chatbot/utils/linkify'
 import { detectMessageDirection } from '@/features/chatbot/utils/messageDirection'
+import { getStreamSafeMarkdown } from '@/features/chatbot/utils/streamSafeMarkdown'
 import type { ChatMessageViewModel } from '@/features/chatbot/types/chatbot.types'
 import { cn } from '@/shared/utils/cn'
 
@@ -37,10 +38,17 @@ export function AnasMessage({
 }: AnasMessageProps) {
   const { t, i18n } = useTranslation('chatbot')
   const isAssistant = message.sender === 'bot' || message.sender === 'admin'
+  const isStreaming = message.status === 'streaming'
   const time = formatTime(message.createdAt, i18n.language)
   const direction = detectMessageDirection(message.message)
 
   if (isAssistant) {
+    // Only trimmed while still streaming — the final "done" text is
+    // already guard-validated and shown exactly as received.
+    const displayedText = isStreaming
+      ? getStreamSafeMarkdown(message.message)
+      : message.message
+
     return (
       <article
         className={cn(
@@ -62,7 +70,18 @@ export function AnasMessage({
           dir={direction.dir}
           lang={direction.lang}
         >
-          <AnasMarkdown content={message.message} />
+          <AnasMarkdown content={displayedText} />
+          {isStreaming ? (
+            <span
+              className={cn(
+                'anas-message__caret',
+                !reducedMotion && 'anas-message__caret--blink',
+              )}
+              aria-hidden="true"
+            >
+              ▍
+            </span>
+          ) : null}
         </div>
 
         {time ? (

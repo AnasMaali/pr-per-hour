@@ -54,6 +54,8 @@ final readonly class HandleChatTurn
             model: (string) config('chatbot.ai.model', ''),
             maxOutputTokens: (int) config('chatbot.ai.max_output_tokens', 500),
             timeoutSeconds: (int) config('chatbot.ai.timeout_seconds', 10),
+            temperature: (float) config('chatbot.ai.temperature', 0.7),
+            topP: (float) config('chatbot.ai.top_p', 0.8),
         );
 
         $replyText = $this->generateQualityCheckedReply($providerRequest);

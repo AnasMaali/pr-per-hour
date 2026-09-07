@@ -7,6 +7,8 @@ namespace Tests\Feature\Chatbot;
 use App\Enums\ChatSender;
 use App\Features\Chatbot\Models\ChatConversation;
 use App\Features\Chatbot\Models\ChatMessage;
+use App\Features\ServiceCategories\Models\ServiceCategory;
+use App\Features\Services\Models\Service;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
@@ -109,12 +111,15 @@ final class ChatbotAiProviderTest extends TestCase
             self::assertSame('test-model-x', $body['model']);
             self::assertSame(321, $body['max_tokens']);
             self::assertSame('none', $body['reasoning_effort']);
+            self::assertSame(0.7, $body['temperature']);
+            self::assertSame(0.8, $body['top_p']);
 
             $messages = $body['messages'];
 
             self::assertSame('system', $messages[0]['role']);
             self::assertStringContainsString('PR Per Hour', $messages[0]['content']);
-            self::assertStringContainsString('Anas', $messages[0]['content']);
+            self::assertStringContainsString('PRIA AI', $messages[0]['content']);
+            self::assertStringContainsString('Anas Maali', $messages[0]['content']);
 
             // history_messages = 2, so only the 2 most recent messages are sent:
             // the earlier visitor message falls outside the bounded window.
@@ -612,7 +617,444 @@ final class ChatbotAiProviderTest extends TestCase
         $replyMessage = (string) $response->json('data.reply.message');
 
         $this->assertStringNotContainsString("Hi, I'm Anas", $replyMessage);
+        $this->assertStringNotContainsString("Hi, I'm PRIA AI", $replyMessage);
         $this->assertStringContainsString('PR Per Hour', $replyMessage);
+    }
+
+    public function test_fallback_arabic_replies_use_gender_neutral_phrasing(): void
+    {
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        $start = $this->startConversation();
+
+        $firstReply = (string) $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            ['message' => 'مرحباً'],
+        )->assertCreated()->json('data.reply.message');
+
+        $secondReply = (string) $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            ['message' => 'شو الخدمات المتوفرة؟'],
+        )->assertCreated()->json('data.reply.message');
+
+        foreach ([$firstReply, $secondReply] as $reply) {
+            foreach (['تودين', 'تفضلين', 'مهتمة', 'حابة', 'مهتم/ة', 'تريد/ين', 'حابب/ة'] as $genderedForm) {
+                $this->assertStringNotContainsString($genderedForm, $reply);
+            }
+        }
+    }
+
+    public function test_fallback_replies_never_spontaneously_name_a_leader(): void
+    {
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        $start = $this->startConversation();
+
+        $arabicReply = (string) $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            ['message' => 'شو الخدمات المتوفرة؟'],
+        )->assertCreated()->json('data.reply.message');
+
+        $this->assertStringNotContainsString('أنس معالي', $arabicReply);
+        $this->assertStringNotContainsString('فاتنة معالي', $arabicReply);
+
+        $start2 = $this->startConversation();
+
+        $englishReply = (string) $this->postJson(
+            "/api/v1/chatbot/conversations/{$start2['token']}/messages",
+            ['message' => 'What services do you offer?'],
+        )->assertCreated()->json('data.reply.message');
+
+        $this->assertStringNotContainsString('Anas Maali', $englishReply);
+        $this->assertStringNotContainsString('Fatina Maali', $englishReply);
+    }
+
+    public function test_emergency_last_resort_does_not_disrupt_normal_pria_ai_branding(): void
+    {
+        // The emergency path itself never mentions the assistant's name
+        // (see the two tests above) — but that must not regress the
+        // ordinary, non-emergency fallback greeting, which still
+        // introduces itself as PRIA AI.
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            ['message' => 'مرحباً'],
+        )->assertCreated();
+
+        $this->assertStringContainsString(
+            'PRIA AI',
+            (string) $response->json('data.reply.message'),
+        );
+    }
+
+    public function test_smart_fallback_lists_active_database_services_for_named_category(): void
+    {
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        $category = ServiceCategory::factory()->create([
+            'name' => 'Data, AI & Technology',
+            'is_active' => true,
+        ]);
+
+        $activeService = Service::factory()->create([
+            'category_id' => $category->id,
+            'title' => 'Dynamic Database AI Service',
+            'description' => 'Created only for the smart fallback regression test.',
+            'is_active' => true,
+        ]);
+
+        $secondActiveService = Service::factory()->create([
+            'category_id' => $category->id,
+            'title' => 'Second Dynamic Database Service',
+            'is_active' => true,
+        ]);
+
+        Service::factory()->create([
+            'category_id' => $category->id,
+            'title' => 'Inactive Smart Fallback Service',
+            'is_active' => false,
+        ]);
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' => 'شو كل الخدمات الموجودة ضمن Data, AI & Technology؟',
+            ],
+        )->assertCreated();
+
+        $reply = (string) $response->json('data.reply.message');
+
+        $this->assertStringContainsString(
+            'Data, AI & Technology',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            $activeService->title,
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            $secondActiveService->title,
+            $reply,
+        );
+
+        $this->assertStringNotContainsString(
+            'Inactive Smart Fallback Service',
+            $reply,
+        );
+
+        $this->assertStringNotContainsString(
+            'ما الهدف أو التحدي المطلوب العمل عليه؟',
+            $reply,
+        );
+    }
+
+    public function test_smart_fallback_resolves_arabic_category_alias_to_authoritative_database_category(): void
+    {
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        $category = ServiceCategory::factory()->create([
+            'name' => 'Data, AI & Technology',
+            'is_active' => true,
+        ]);
+
+        $service = Service::factory()->create([
+            'category_id' => $category->id,
+            'title' => 'Arabic Alias Database Service',
+            'is_active' => true,
+        ]);
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' => 'شو خدمات البيانات والذكاء الاصطناعي؟',
+            ],
+        )->assertCreated();
+
+        $reply = (string) $response->json('data.reply.message');
+
+        $this->assertStringContainsString(
+            'Data, AI & Technology',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            $service->title,
+            $reply,
+        );
+    }
+
+    public function test_smart_fallback_answers_technology_lead_and_refuses_to_invent_ceo(): void
+    {
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' => 'مين مسؤول التكنولوجيا؟ والمدير التنفيذي؟',
+            ],
+        )->assertCreated();
+
+        $reply = (string) $response->json('data.reply.message');
+
+        $this->assertStringContainsString(
+            'أنس معالي',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'رئيس قسم التكنولوجيا',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'المدير التنفيذي',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'لن أخمّن',
+            $reply,
+        );
+    }
+
+    public function test_smart_fallback_confirmation_uses_previous_visitor_question(): void
+    {
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        $start = $this->startConversation();
+
+        $firstResponse = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' => 'مين مسؤول التكنولوجيا؟',
+            ],
+        )->assertCreated();
+
+        $firstReply = (string) $firstResponse->json(
+            'data.reply.message',
+        );
+
+        $this->assertStringContainsString(
+            'أنس معالي',
+            $firstReply,
+        );
+
+        $confirmationResponse = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' => 'أكيد؟',
+            ],
+        )->assertCreated();
+
+        $confirmationReply = (string) $confirmationResponse->json(
+            'data.reply.message',
+        );
+
+        $this->assertStringContainsString(
+            'نعم، بالتأكيد',
+            $confirmationReply,
+        );
+
+        $this->assertStringContainsString(
+            'أنس معالي',
+            $confirmationReply,
+        );
+
+        $this->assertStringContainsString(
+            'رئيس قسم التكنولوجيا',
+            $confirmationReply,
+        );
+    }
+
+    public function test_smart_fallback_answers_technology_lead_in_english(): void
+    {
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' => 'Who handles technology?',
+            ],
+        )->assertCreated();
+
+        $reply = (string) $response->json('data.reply.message');
+
+        $this->assertStringContainsString(
+            'Anas Maali',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'Head of Technology',
+            $reply,
+        );
+
+        $this->assertStringNotContainsString(
+            "Hi, I'm PRIA AI",
+            $reply,
+        );
+    }
+
+    public function test_smart_fallback_answers_founder_question_with_canonical_identity(): void
+    {
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' => 'مين المؤسس؟',
+            ],
+        )->assertCreated();
+
+        $reply = (string) $response->json('data.reply.message');
+
+        $this->assertStringContainsString(
+            'فاتنة معالي',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'المؤسس والمستشار الرئيسي',
+            $reply,
+        );
+
+        $this->assertStringNotContainsString(
+            'أنس معالي',
+            $reply,
+        );
+    }
+
+    public function test_smart_fallback_contact_reply_uses_configured_company_details(): void
+    {
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        config()->set(
+            'chatbot.company.website',
+            'https://contact-test.example',
+        );
+
+        config()->set(
+            'chatbot.company.email',
+            'contact-test@example.com',
+        );
+
+        config()->set(
+            'chatbot.company.phone',
+            '+970599999999',
+        );
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' => 'كيف أتواصل معكم؟',
+            ],
+        )->assertCreated();
+
+        $reply = (string) $response->json('data.reply.message');
+
+        $this->assertStringContainsString(
+            'https://contact-test.example',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'contact-test@example.com',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            '+970599999999',
+            $reply,
+        );
+    }
+
+    public function test_smart_fallback_recommends_data_analysis_for_sales_decline_question(): void
+    {
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' => 'عندي مبيعات آخر سنتين ونزلت كثير بآخر 6 أشهر، شو الخدمة الأنسب؟',
+            ],
+        )->assertCreated();
+
+        $reply = (string) $response->json('data.reply.message');
+
+        $this->assertStringContainsString(
+            'Data Analysis & Business Intelligence',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'Dashboards & Decision Support',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'آخر 6 أشهر',
+            $reply,
+        );
+    }
+
+    public function test_smart_fallback_does_not_promise_realtime_dashboard_without_integration_context(): void
+    {
+        config()->set('chatbot.ai.driver', 'fallback');
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' => 'هل الـ dashboard عندكم بتكون real-time وتحديثها فوري؟',
+            ],
+        )->assertCreated();
+
+        $reply = (string) $response->json('data.reply.message');
+
+        $this->assertStringContainsString(
+            'وتيرة تحديث لوحة المعلومات',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'مصدر البيانات',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'آلية الربط',
+            $reply,
+        );
+
+        $this->assertStringNotContainsString(
+            'real-time',
+            strtolower($reply),
+        );
+
+        $this->assertStringContainsString(
+            'Dashboards & Decision Support',
+            $reply,
+        );
     }
 
     public function test_public_api_response_never_exposes_quality_guard_diagnostics(): void
