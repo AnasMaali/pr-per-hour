@@ -151,6 +151,131 @@ final class ChatbotStreamingTest extends TestCase
         $response->assertStatus(409)->assertJsonPath('error_code', 'CHAT_CONVERSATION_CLOSED');
     }
 
+    public function test_dashboard_realtime_streaming_answer_bypasses_groq_transport(): void
+    {
+        $this->configureGroq();
+
+        $this->fakeGroqStream([
+            'THIS EXTERNAL REALTIME ANSWER MUST NEVER BE USED.',
+        ]);
+
+        $token = $this->startConversation();
+
+        $response = $this->post(
+            "/api/v1/chatbot/conversations/{$token}/messages/stream",
+            [
+                'message' =>
+                    'هل اللوحة بتكون real-time؟',
+            ],
+        );
+
+        $events = $this->parseSseEvents(
+            $response->streamedContent(),
+        );
+
+        $this->assertSame(
+            0,
+            $this->transport->callCount,
+        );
+
+        $visible = '';
+
+        foreach ($events as $event) {
+            if ($event['event'] === 'delta') {
+                $visible .= (string) (
+                    $event['data']['content']
+                    ?? ''
+                );
+            }
+        }
+
+        $this->assertStringContainsString(
+            'مصدر البيانات',
+            $visible,
+        );
+
+        $this->assertStringContainsString(
+            'آلية الربط',
+            $visible,
+        );
+
+        $this->assertStringNotContainsString(
+            'THIS EXTERNAL REALTIME ANSWER',
+            $visible,
+        );
+
+        $done = end($events);
+
+        $this->assertSame(
+            'done',
+            $done['event'],
+        );
+
+        $this->assertStringContainsString(
+            'Dashboards & Decision Support',
+            $done['data']['message']['message'],
+        );
+    }
+
+    public function test_authoritative_streaming_answer_bypasses_groq_transport(): void
+    {
+        $this->configureGroq();
+
+        // Deliberately register a transport that would produce the wrong
+        // answer if called. The authoritative fast-path must leave callCount
+        // at zero.
+        $this->fakeGroqStream([
+            'THIS EXTERNAL RESPONSE MUST NEVER BE USED.',
+        ]);
+
+        $token = $this->startConversation();
+
+        $response = $this->post(
+            "/api/v1/chatbot/conversations/{$token}/messages/stream",
+            ['message' => 'مين المؤسس؟'],
+        );
+
+        $events = $this->parseSseEvents(
+            $response->streamedContent(),
+        );
+
+        $this->assertSame(
+            0,
+            $this->transport->callCount,
+        );
+
+        $rawVisible = '';
+        foreach ($events as $event) {
+            if ($event['event'] === 'delta') {
+                $rawVisible .= (string) (
+                    $event['data']['content'] ?? ''
+                );
+            }
+        }
+
+        $this->assertStringContainsString(
+            'فاتنة معالي',
+            $rawVisible,
+        );
+
+        $this->assertStringNotContainsString(
+            'THIS EXTERNAL RESPONSE',
+            $rawVisible,
+        );
+
+        $done = end($events);
+
+        $this->assertSame(
+            'done',
+            $done['event'],
+        );
+
+        $this->assertStringContainsString(
+            'المؤسس والمستشار الرئيسي',
+            $done['data']['message']['message'],
+        );
+    }
+
     public function test_visitor_message_persists_before_generation_and_the_stream_emits_start_delta_and_done(): void
     {
         $this->configureGroq();
@@ -244,7 +369,7 @@ final class ChatbotStreamingTest extends TestCase
 
         $response = $this->post(
             "/api/v1/chatbot/conversations/{$token}/messages/stream",
-            ['message' => 'مين مسؤول التكنولوجيا؟'],
+            ['message' => 'احكيلي عن خبرات فريق PR Per Hour بشكل عام.'],
         );
 
         $events = $this->parseSseEvents($response->streamedContent());

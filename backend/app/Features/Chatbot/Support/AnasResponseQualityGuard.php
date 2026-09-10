@@ -78,15 +78,15 @@ final class AnasResponseQualityGuard
 
         // English-pattern rules — compounds before the bare fallback phrase
         // they contain.
-        ['pattern' => '/\bin\s+real[\s-]?time\b/i', 'ar' => 'بحسب آلية تحديث وربط البيانات المتاحة', 'en' => 'from a unified dashboard, based on the available data refresh and integration setup'],
-        ['pattern' => '/\breal[\s-]?time\s+dashboard\b/i', 'ar' => 'لوحة موحدة، بحسب آلية تحديث وربط البيانات المتاحة', 'en' => 'unified dashboard, based on the available data refresh and integration setup'],
+        ['pattern' => '/\bin\s+real[\s\p{Pd}\x{2212}]?time\b/iu', 'ar' => 'بحسب آلية تحديث وربط البيانات المتاحة', 'en' => 'from a unified dashboard, based on the available data refresh and integration setup'],
+        ['pattern' => '/\breal[\s\p{Pd}\x{2212}]?time\s+dashboard\b/iu', 'ar' => 'لوحة موحدة، بحسب آلية تحديث وربط البيانات المتاحة', 'en' => 'unified dashboard, based on the available data refresh and integration setup'],
         ['pattern' => '/\blive\s+dashboard\b/i', 'ar' => 'لوحة موحدة، بحسب آلية تحديث وربط البيانات المتاحة', 'en' => 'unified dashboard, based on the available data refresh and integration setup'],
         ['pattern' => '/\blive\s+data\b/i', 'ar' => 'بيانات يتم تحديثها بحسب آلية الربط والتحديث المتاحة', 'en' => 'data updated based on the available integration and refresh setup'],
         ['pattern' => '/\blive\s+tracking\b/i', 'ar' => 'متابعة حسب آلية تحديث وربط البيانات المتاحة', 'en' => 'tracking based on the available data refresh and integration setup'],
         ['pattern' => '/\binstant\s+synchroni[sz]ation\b/i', 'ar' => 'مزامنة حسب آلية الربط المتاحة', 'en' => 'synchronization based on the available integration setup'],
         ['pattern' => '/\binstant\s+updates?\b/i', 'ar' => 'تحديثات حسب آلية الربط المتاحة', 'en' => 'updates based on the available refresh setup'],
         ['pattern' => '/\bautomatically\s+synchroni[sz]ed\b/i', 'ar' => 'مزامنة حسب آلية الربط المتاحة', 'en' => 'synchronized based on the available integration setup'],
-        ['pattern' => '/\breal[\s-]?time\b/i', 'ar' => 'بحسب آلية تحديث وربط البيانات المتاحة', 'en' => 'based on the available data refresh and integration setup'],
+        ['pattern' => '/\breal[\s\p{Pd}\x{2212}]?time\b/iu', 'ar' => 'بحسب آلية تحديث وربط البيانات المتاحة', 'en' => 'based on the available data refresh and integration setup'],
     ];
 
     /**

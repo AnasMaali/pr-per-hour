@@ -68,6 +68,10 @@ final class ChatbotAiProviderTest extends TestCase
     public function test_groq_provider_receives_system_prompt_bounded_history_and_correct_request_shape(): void
     {
         $this->configureGroq(historyLimit: 2);
+        config()->set(
+            'chatbot.ai.model',
+            'qwen/qwen3.6-27b',
+        );
 
         Http::fake([
             'api.groq.test/*' => Http::response([
@@ -108,9 +112,15 @@ final class ChatbotAiProviderTest extends TestCase
             $body = $request->data();
 
             self::assertSame('Bearer test-secret-key', $request->header('Authorization')[0]);
-            self::assertSame('test-model-x', $body['model']);
+            self::assertSame(
+                'qwen/qwen3.6-27b',
+                $body['model'],
+            );
             self::assertSame(321, $body['max_tokens']);
-            self::assertSame('none', $body['reasoning_effort']);
+            self::assertSame(
+                'none',
+                $body['reasoning_effort'],
+            );
             self::assertSame(0.7, $body['temperature']);
             self::assertSame(0.8, $body['top_p']);
 
@@ -136,6 +146,147 @@ final class ChatbotAiProviderTest extends TestCase
             self::assertStringNotContainsString('OLD_MESSAGE_SHOULD_BE_EXCLUDED', $raw);
             self::assertStringNotContainsString('Jane Visitor', $raw);
             self::assertStringNotContainsString('jane@example.com', $raw);
+
+            return true;
+        });
+    }
+
+    public function test_groq_qwen_38_uses_non_thinking_reasoning_effort(): void
+    {
+        $this->configureGroq();
+
+        config()->set(
+            'chatbot.ai.model',
+            'qwen/qwen3.8-27b',
+        );
+
+        Http::fake([
+            'api.groq.test/*' => Http::response([
+                'model' => 'qwen/qwen3.8-27b',
+                'choices' => [
+                    [
+                        'message' => [
+                            'role' => 'assistant',
+                            'content' => 'PR Per Hour reply.',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $start = $this->startConversation();
+
+        $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            ['message' => 'Hello'],
+        )->assertCreated();
+
+        Http::assertSent(function (Request $request): bool {
+            $body = $request->data();
+
+            self::assertSame(
+                'qwen/qwen3.8-27b',
+                $body['model'],
+            );
+
+            self::assertSame(
+                'none',
+                $body['reasoning_effort'],
+            );
+
+            return true;
+        });
+    }
+
+    public function test_groq_gpt_oss_120b_uses_supported_low_reasoning_effort(): void
+    {
+        $this->configureGroq();
+
+        config()->set(
+            'chatbot.ai.model',
+            'openai/gpt-oss-120b',
+        );
+
+        Http::fake([
+            'api.groq.test/*' => Http::response([
+                'model' => 'openai/gpt-oss-120b',
+                'choices' => [
+                    [
+                        'message' => [
+                            'role' => 'assistant',
+                            'content' => 'PR Per Hour reply.',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $start = $this->startConversation();
+
+        $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            ['message' => 'Hello'],
+        )->assertCreated();
+
+        Http::assertSent(function (Request $request): bool {
+            $body = $request->data();
+
+            self::assertSame(
+                'openai/gpt-oss-120b',
+                $body['model'],
+            );
+
+            self::assertSame(
+                'low',
+                $body['reasoning_effort'],
+            );
+
+            return true;
+        });
+    }
+
+    public function test_groq_unknown_model_omits_model_specific_reasoning_effort(): void
+    {
+        $this->configureGroq();
+
+        config()->set(
+            'chatbot.ai.model',
+            'future/provider-model',
+        );
+
+        Http::fake([
+            'api.groq.test/*' => Http::response([
+                'model' => 'future/provider-model',
+                'choices' => [
+                    [
+                        'message' => [
+                            'role' => 'assistant',
+                            'content' => 'PR Per Hour reply.',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $start = $this->startConversation();
+
+        $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            ['message' => 'Hello'],
+        )->assertCreated();
+
+        Http::assertSent(function (Request $request): bool {
+            $body = $request->data();
+
+            self::assertSame(
+                'future/provider-model',
+                $body['model'],
+            );
+
+            self::assertArrayNotHasKey(
+                'reasoning_effort',
+                $body,
+            );
 
             return true;
         });
@@ -688,6 +839,408 @@ final class ChatbotAiProviderTest extends TestCase
             'PRIA AI',
             (string) $response->json('data.reply.message'),
         );
+    }
+
+    public function test_founder_expertise_question_does_not_trigger_identity_fast_path(): void
+    {
+        $this->configureGroq();
+
+        Http::fake([
+            'api.groq.test/*' => Http::response([
+                'model' => 'test-model-x',
+                'choices' => [
+                    [
+                        'message' => [
+                            'role' => 'assistant',
+                            'content' =>
+                                'تتضمن خبرات المؤسس مجالات اتصال واستشارات مرتبطة بعمل PR Per Hour.',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $start = $this->startConversation();
+
+        $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            ['message' => 'شو خبرة المؤسس؟'],
+        )->assertCreated();
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_technology_responsibilities_question_does_not_trigger_identity_fast_path(): void
+    {
+        $this->configureGroq();
+
+        Http::fake([
+            'api.groq.test/*' => Http::response([
+                'model' => 'test-model-x',
+                'choices' => [
+                    [
+                        'message' => [
+                            'role' => 'assistant',
+                            'content' =>
+                                'دور قسم التكنولوجيا يشمل تقديم حلول تقنية وبيانات وذكاء اصطناعي.',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $start = $this->startConversation();
+
+        $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' =>
+                    'شو مسؤوليات رئيس قسم التكنولوجيا؟',
+            ],
+        )->assertCreated();
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_email_marketing_question_is_not_mistaken_for_contact_request(): void
+    {
+        $this->configureGroq();
+
+        Http::fake([
+            'api.groq.test/*' => Http::response([
+                'model' => 'test-model-x',
+                'choices' => [
+                    [
+                        'message' => [
+                            'role' => 'assistant',
+                            'content' =>
+                                'I can explain the relevant PR Per Hour services based on the official service catalog.',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $start = $this->startConversation();
+
+        $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' =>
+                    'Do you offer email marketing services?',
+            ],
+        )->assertCreated();
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_compound_technology_and_ceo_identity_question_bypasses_groq(): void
+    {
+        $this->configureGroq();
+        Http::fake();
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' =>
+                    'مين مسؤول التكنولوجيا؟ والمدير التنفيذي؟',
+            ],
+        )->assertCreated();
+
+        $reply = (string) $response->json(
+            'data.reply.message',
+        );
+
+        $this->assertStringContainsString(
+            'أنس معالي',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'رئيس قسم التكنولوجيا',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'المدير التنفيذي',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'لن أخمّن',
+            $reply,
+        );
+
+        Http::assertNothingSent();
+    }
+
+    public function test_reversed_compound_ceo_and_technology_identity_question_bypasses_groq(): void
+    {
+        $this->configureGroq();
+        Http::fake();
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' =>
+                    'مين المدير التنفيذي ومسؤول التكنولوجيا؟',
+            ],
+        )->assertCreated();
+
+        $reply = (string) $response->json(
+            'data.reply.message',
+        );
+
+        $this->assertStringContainsString(
+            'أنس معالي',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'لن أخمّن',
+            $reply,
+        );
+
+        Http::assertNothingSent();
+    }
+
+    public function test_mixed_leadership_identity_and_responsibilities_question_stays_on_ai_path(): void
+    {
+        $this->configureGroq();
+
+        Http::fake([
+            'api.groq.test/*' => Http::response([
+                'model' => 'test-model-x',
+                'choices' => [
+                    [
+                        'message' => [
+                            'role' => 'assistant',
+                            'content' =>
+                                'يمكن توضيح المسؤوليات بناءً على المعلومات الرسمية المتاحة عن الفريق.',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $start = $this->startConversation();
+
+        $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' =>
+                    'مين مسؤول التكنولوجيا؟ وشو مسؤوليات المدير التنفيذي؟',
+            ],
+        )->assertCreated();
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_authoritative_founder_question_bypasses_groq_entirely(): void
+    {
+        $this->configureGroq();
+        Http::fake();
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            ['message' => 'مين المؤسس؟'],
+        )->assertCreated();
+
+        $reply = (string) $response->json(
+            'data.reply.message',
+        );
+
+        $this->assertStringContainsString(
+            'فاتنة معالي',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'المؤسس والمستشار الرئيسي',
+            $reply,
+        );
+
+        Http::assertNothingSent();
+    }
+
+    public function test_authoritative_technology_question_bypasses_groq_entirely(): void
+    {
+        $this->configureGroq();
+        Http::fake();
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            ['message' => 'مين مسؤول التكنولوجيا؟'],
+        )->assertCreated();
+
+        $reply = (string) $response->json(
+            'data.reply.message',
+        );
+
+        $this->assertStringContainsString(
+            'أنس معالي',
+            $reply,
+        );
+
+        $this->assertStringContainsString(
+            'رئيس قسم التكنولوجيا',
+            $reply,
+        );
+
+        Http::assertNothingSent();
+    }
+
+    public function test_dashboard_realtime_question_bypasses_groq_entirely(): void
+    {
+        foreach ([
+            'هل اللوحة بتكون real-time؟',
+            'هل اللوحة بتكون real-time؟',
+            'هل لوحة المتابعة بتكون لحظية؟',
+            'هل الداشبورد فيها تحديث فوري؟',
+        ] as $question) {
+            $this->configureGroq();
+            Http::fake();
+
+            $start = $this->startConversation();
+
+            $response = $this->postJson(
+                "/api/v1/chatbot/conversations/{$start['token']}/messages",
+                [
+                    'message' => $question,
+                ],
+            )->assertCreated();
+
+            $reply = (string) $response->json(
+                'data.reply.message',
+            );
+
+            $this->assertStringContainsString(
+                'مصدر البيانات',
+                $reply,
+            );
+
+            $this->assertStringContainsString(
+                'آلية الربط',
+                $reply,
+            );
+
+            $this->assertStringContainsString(
+                'Dashboards & Decision Support',
+                $reply,
+            );
+
+            $this->assertStringNotContainsString(
+                'real-time',
+                strtolower($reply),
+            );
+        }
+
+        Http::assertNothingSent();
+    }
+
+    public function test_authoritative_contact_question_bypasses_groq_entirely(): void
+    {
+        $this->configureGroq();
+
+        config()->set(
+            'chatbot.company.email',
+            'fast-path@example.com',
+        );
+
+        Http::fake();
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            ['message' => 'كيف أتواصل معكم؟'],
+        )->assertCreated();
+
+        $this->assertStringContainsString(
+            'fast-path@example.com',
+            (string) $response->json(
+                'data.reply.message',
+            ),
+        );
+
+        Http::assertNothingSent();
+    }
+
+    public function test_authoritative_category_catalog_question_bypasses_groq_and_reads_database(): void
+    {
+        $this->configureGroq();
+
+        $category = ServiceCategory::factory()->create([
+            'name' => 'Data, AI & Technology',
+            'is_active' => true,
+        ]);
+
+        Service::factory()->create([
+            'category_id' => $category->id,
+            'title' => 'Fast Path Database Service',
+            'is_active' => true,
+        ]);
+
+        Http::fake();
+
+        $start = $this->startConversation();
+
+        $response = $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' =>
+                    'شو كل الخدمات الموجودة ضمن Data, AI & Technology؟',
+            ],
+        )->assertCreated();
+
+        $this->assertStringContainsString(
+            'Fast Path Database Service',
+            (string) $response->json(
+                'data.reply.message',
+            ),
+        );
+
+        Http::assertNothingSent();
+    }
+
+    public function test_non_authoritative_advisory_question_still_calls_groq_once(): void
+    {
+        $this->configureGroq();
+
+        Http::fake([
+            'api.groq.test/*' => Http::response([
+                'model' => 'test-model-x',
+                'choices' => [
+                    [
+                        'message' => [
+                            'role' => 'assistant',
+                            'content' =>
+                                'The best next step depends on the business objective and available data.',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $start = $this->startConversation();
+
+        $this->postJson(
+            "/api/v1/chatbot/conversations/{$start['token']}/messages",
+            [
+                'message' =>
+                    'ساعدني أقرر كيف أطور أداء شركتي خلال السنة القادمة.',
+            ],
+        )->assertCreated();
+
+        Http::assertSentCount(1);
     }
 
     public function test_smart_fallback_lists_active_database_services_for_named_category(): void

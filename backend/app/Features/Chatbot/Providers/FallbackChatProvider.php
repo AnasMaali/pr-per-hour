@@ -7,7 +7,7 @@ namespace App\Features\Chatbot\Providers;
 use App\Features\Chatbot\Contracts\ChatProvider;
 use App\Features\Chatbot\DTOs\ChatProviderRequest;
 use App\Features\Chatbot\DTOs\ChatProviderResult;
-use App\Features\Chatbot\Support\PrPerHourSmartFallbackResponder;
+use App\Features\Chatbot\Support\PrPerHourSmartResponder;
 
 /**
  * Local, offline substitute for a real AI provider. Keeps PRIA AI useful
@@ -29,7 +29,7 @@ use App\Features\Chatbot\Support\PrPerHourSmartFallbackResponder;
 final class FallbackChatProvider implements ChatProvider
 {
     public function __construct(
-        private readonly PrPerHourSmartFallbackResponder $smartResponder,
+        private readonly PrPerHourSmartResponder $smartResponder,
     ) {}
 
     public function generate(ChatProviderRequest $request): ChatProviderResult

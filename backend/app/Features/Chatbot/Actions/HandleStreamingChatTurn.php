@@ -13,6 +13,7 @@ use App\Features\Chatbot\Resources\ChatMessageResource;
 use App\Features\Chatbot\Support\AnasResponseQualityGuard;
 use App\Features\Chatbot\Support\AnasSystemPromptBuilder;
 use App\Features\Chatbot\Support\ChatHistoryBuilder;
+use App\Features\Chatbot\Support\PrPerHourSmartResponder;
 use App\Features\Chatbot\Support\SafeStreamChunker;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -31,7 +32,7 @@ use Throwable;
  * Never exposes provider name, model, API details, quality-guard
  * diagnostics, database IDs, or internal exception messages in any event.
  *
- * Exactly one external Groq request per turn, via
+ * At most one external Groq request per turn. Authoritative first-party questions bypass Groq entirely; other turns use
  * ChatProviderManager::stream() — which itself guarantees a safe result
  * under every failure mode with no second LLM call (see that class).
  *
@@ -57,6 +58,7 @@ final readonly class HandleStreamingChatTurn
         private AnasSystemPromptBuilder $systemPromptBuilder,
         private ChatProviderManager $provider,
         private AnasResponseQualityGuard $qualityGuard,
+        private PrPerHourSmartResponder $smartResponder,
         private FallbackChatProvider $fallbackProvider,
     ) {}
 
@@ -84,9 +86,25 @@ final readonly class HandleStreamingChatTurn
             topP: (float) config('chatbot.ai.top_p', 0.8),
         );
 
+        $authoritativeReply = $this->smartResponder
+            ->respondAuthoritatively(
+                $providerRequest,
+                FallbackChatProvider::messageLooksArabic(
+                    $providerRequest,
+                ),
+            );
+
         return new StreamedResponse(
-            function () use ($conversation, $providerRequest): void {
-                $this->stream($conversation, $providerRequest);
+            function () use (
+                $conversation,
+                $providerRequest,
+                $authoritativeReply,
+            ): void {
+                $this->stream(
+                    $conversation,
+                    $providerRequest,
+                    $authoritativeReply,
+                );
             },
             200,
             [
@@ -98,10 +116,58 @@ final readonly class HandleStreamingChatTurn
         );
     }
 
-    private function stream(ChatConversation $conversation, ChatProviderRequest $providerRequest): void
-    {
+    private function stream(
+        ChatConversation $conversation,
+        ChatProviderRequest $providerRequest,
+        ?string $authoritativeReply,
+    ): void {
         $this->prepareOutputForStreaming();
         $this->emit('start', []);
+
+        /*
+         * Preserve the exact same SSE contract for authoritative local
+         * answers. The frontend does not need to know whether the answer
+         * came from first-party knowledge or from an external model.
+         */
+        if ($authoritativeReply !== null) {
+            $quality = $this->qualityGuard->evaluate(
+                $authoritativeReply,
+            );
+
+            $finalText = $quality->accepted
+                ? $quality->text
+                : $this->fallbackProvider
+                    ->generate($providerRequest)
+                    ->content;
+
+            if (! $quality->accepted) {
+                Log::warning(
+                    'Authoritative streamed PRIA AI reply failed quality guard; using local fallback.',
+                    ['issues' => $quality->issues],
+                );
+            }
+
+            $botMessage = $this->sendMessage->execute(
+                $conversation,
+                $finalText,
+                ChatSender::Bot,
+            );
+
+            if (! connection_aborted()) {
+                $this->emit(
+                    'delta',
+                    ['content' => $finalText],
+                );
+
+                $this->emit('done', [
+                    'message' => (
+                        new ChatMessageResource($botMessage)
+                    )->resolve(),
+                ]);
+            }
+
+            return;
+        }
 
         $chunker = new SafeStreamChunker($this->qualityGuard);
         $clientGone = false;

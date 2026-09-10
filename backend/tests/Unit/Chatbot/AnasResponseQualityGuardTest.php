@@ -108,6 +108,56 @@ final class AnasResponseQualityGuardTest extends TestCase
      * would "fix" the overclaim while leaving the exact kind of broken
      * code-switching this guard exists to prevent.
      */
+    public function test_softens_realtime_written_with_unicode_non_breaking_hyphen(): void
+    {
+        // GPT-OSS has emitted U+2011 NON-BREAKING HYPHEN here instead
+        // of the ordinary ASCII "-" character.
+        $result = $this->guard->evaluate(
+            'لوحة المتابعة لا تكون real-time بشكل افتراضي.',
+        );
+
+        $this->assertTrue($result->accepted);
+
+        $this->assertStringNotContainsString(
+            'real-time',
+            $result->text,
+        );
+
+        $this->assertContains(
+            'unsupported_realtime_claim',
+            $result->issues,
+        );
+    }
+
+    public function test_softens_realtime_across_common_unicode_dash_variants(): void
+    {
+        foreach ([
+            'real‐time', // U+2010 HYPHEN
+            'real-time', // U+2011 NON-BREAKING HYPHEN
+            'real‒time', // U+2012 FIGURE DASH
+            'real–time', // U+2013 EN DASH
+            'real—time', // U+2014 EM DASH
+            'real―time', // U+2015 HORIZONTAL BAR
+            'real−time', // U+2212 MINUS SIGN
+        ] as $variant) {
+            $result = $this->guard->evaluate(
+                "The dashboard is {$variant}.",
+            );
+
+            $this->assertTrue($result->accepted);
+
+            $this->assertStringNotContainsString(
+                $variant,
+                $result->text,
+            );
+
+            $this->assertContains(
+                'unsupported_realtime_claim',
+                $result->issues,
+            );
+        }
+    }
+
     public function test_softens_an_english_realtime_phrase_embedded_in_an_arabic_sentence_with_arabic_text(): void
     {
         $result = $this->guard->evaluate('هل يمكن أن تكون اللوحة real-time؟ لا يمكن ضمان ذلك.');

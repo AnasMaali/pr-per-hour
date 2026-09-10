@@ -125,7 +125,7 @@ final class GroqChatProvider implements ChatProvider, StreamingChatProvider
      * remains unaware of how the bytes were fetched.
      *
      * On failure, throws PartialStreamChatProviderException (carrying
-     * whatever raw content had already been produced) if the stream broke
+     * whatever visible reasoning-stripped content had already been produced) if the stream broke
      * down after some content arrived, or the plain ChatProviderException
      * if nothing was ever produced — letting the caller tell the two
      * cases apart and react accordingly.
@@ -270,19 +270,48 @@ final class GroqChatProvider implements ChatProvider, StreamingChatProvider
      */
     private function buildPayload(ChatProviderRequest $request): array
     {
-        return [
+        $payload = [
             'model' => $request->model,
             'max_tokens' => $request->maxOutputTokens,
             'messages' => $this->buildMessages($request),
             'temperature' => $request->temperature,
             'top_p' => $request->topP,
-            // The assistant's replies are customer-service dialogue, not
-            // multi-step problem solving: chain-of-thought reasoning isn't
-            // needed and, left on, can consume the whole max_tokens budget
-            // before the visitor-facing answer is produced. stripReasoning()
-            // below is kept as a defensive backstop regardless.
-            'reasoning_effort' => 'none',
         ];
+
+        /*
+         * Groq exposes reasoning_effort through one API field, but the
+         * accepted values are model-specific:
+         *
+         * - Qwen 3.6 / 3.8 support "none" for fast instruct dialogue.
+         * - GPT-OSS 20B / 120B do NOT support "none"; "low" is the
+         *   appropriate starting point for this customer-facing chatbot.
+         * - For an unknown future model, omit the field rather than risk
+         *   sending a value that model rejects with HTTP 400.
+         *
+         * Reasoning removal below remains a defensive backstop regardless.
+         */
+        $reasoningEffort = $this->reasoningEffortForModel(
+            $request->model,
+        );
+
+        if ($reasoningEffort !== null) {
+            $payload['reasoning_effort'] = $reasoningEffort;
+        }
+
+        return $payload;
+    }
+
+    private function reasoningEffortForModel(string $model): ?string
+    {
+        return match ($model) {
+            'qwen/qwen3.6-27b',
+            'qwen/qwen3.8-27b' => 'none',
+
+            'openai/gpt-oss-20b',
+            'openai/gpt-oss-120b' => 'low',
+
+            default => null,
+        };
     }
 
     /**

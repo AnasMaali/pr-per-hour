@@ -21,7 +21,7 @@ return [
 
         'model' => env(
             'CHATBOT_AI_MODEL',
-            'qwen/qwen3.6-27b',
+            'qwen/qwen3.8-27b',
         ),
 
         'history_messages' => (int) env(

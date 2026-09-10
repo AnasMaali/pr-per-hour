@@ -111,6 +111,16 @@ final class ChatbotKnowledgeTest extends TestCase
             'Head of Technology',
             $context,
         );
+
+        $this->assertStringContainsString(
+            'المؤسس والمستشار الرئيسي',
+            $context,
+        );
+
+        $this->assertStringContainsString(
+            'رئيس قسم التكنولوجيا',
+            $context,
+        );
     }
 
     public function test_knowledge_keeps_data_ai_technology_and_training_categories_distinct(): void

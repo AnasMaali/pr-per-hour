@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Features\Chatbot\DTOs;
 
 /**
- * Everything an AI provider needs to generate Anas's next reply,
+ * Everything an AI provider needs to generate PRIA AI's next reply,
  * already assembled by the application so provider adapters stay
  * free of business logic (prompts, knowledge, history selection).
  */
