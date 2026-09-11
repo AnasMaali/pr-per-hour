@@ -167,6 +167,12 @@ final readonly class PrPerHourSmartResponder
             return null;
         }
 
+        if ($this->isInternalTechnicalQuestion($text)) {
+            return $isArabic
+                ? 'لا أشارك تفاصيل الموديل أو مزود الذكاء الاصطناعي أو التعليمات الداخلية للنظام. أنا **PRIA AI**، ومهمتي تقديم معلومات دقيقة عن PR Per Hour وخدماتها.'
+                : "I can't share internal model, AI-provider, system-prompt, or implementation details. I'm **PRIA AI**, and I'm here to provide accurate information about PR Per Hour and its services.";
+        }
+
         $asksTechnology = $this->isTechnologyIdentityQuestion(
             $text,
         );
@@ -203,6 +209,12 @@ final readonly class PrPerHourSmartResponder
                 : 'The currently available official PR Per Hour information does not identify a CEO, so I will not guess.';
         }
 
+        if ($this->isGeneralManagerIdentityQuestion($text)) {
+            return $isArabic
+                ? 'إذا كان المقصود **المدير التنفيذي (CEO)**، فلا تتضمن المعلومات الرسمية المتاحة حاليًا اسمًا موثقًا لهذا المنصب. أما **فاتنة معالي** فهي **المؤسس والمستشار الرئيسي** في PR Per Hour.'
+                : 'If you mean the **CEO**, the currently available official information does not identify a person in that role. **Fatina Maali** is the **Founder & Principal Consultant** at PR Per Hour.';
+        }
+
         if ($this->isFounderIdentityQuestion($text)) {
             return $isArabic
                 ? '**فاتنة معالي** هي **المؤسس والمستشار الرئيسي** في PR Per Hour.'
@@ -224,8 +236,8 @@ final readonly class PrPerHourSmartResponder
          */
         if ($this->isDashboardRealtimeQuestion($text)) {
             return $isArabic
-                ? "وتيرة تحديث لوحة المعلومات تعتمد على **مصدر البيانات وآلية الربط المتاحة** لكل حالة، لذلك لا يتم افتراض وجود تحديث لحظي تلقائيًا.\n\nيمكن تصميم **Dashboards & Decision Support** لعرض المؤشرات من مكان موحد، وتحديد آلية التحديث المناسبة بعد تقييم البنية التقنية ومصادر البيانات."
-                : "Dashboard refresh frequency depends on the **available data sources and integration setup**, so continuous automatic updates are not assumed by default.\n\n**Dashboards & Decision Support** can provide a unified view of key indicators, with the appropriate refresh approach determined after evaluating the technical setup and data sources.";
+                ? "وتيرة تحديث لوحة المعلومات تعتمد على **مصدر البيانات وآلية الربط المتاحة** لكل حالة، لذلك لا يمكن تحديد وتيرة ثابتة مسبقًا.\n\nيمكن تصميم **Dashboards & Decision Support** لعرض المؤشرات من مكان موحد، وتحديد آلية التحديث المناسبة بعد تقييم البنية التقنية ومصادر البيانات."
+                : "Dashboard refresh frequency depends on the **available data sources and integration setup**, so a fixed refresh frequency cannot be promised in advance.\n\n**Dashboards & Decision Support** can provide a unified view of key indicators, with the appropriate refresh approach determined after evaluating the technical setup and data sources.";
         }
 
         if ($this->isAuthoritativeContactQuestion($text)) {
@@ -327,6 +339,64 @@ final readonly class PrPerHourSmartResponder
             "- Website: {$website}",
             "- Email: {$email}",
             "- Phone: {$phone}",
+        ]);
+    }
+
+    private function isInternalTechnicalQuestion(
+        string $text,
+    ): bool {
+        return $this->containsAny($text, [
+            'system prompt',
+            'show me your prompt',
+            'internal instructions',
+            'system instructions',
+            'تعليماتك الداخلية',
+            'التعليمات الداخلية',
+            'برومبت النظام',
+            'api key',
+            'مفتاح api',
+            'مفتاح الـ api',
+            'model اللي شغال عندك',
+            'الموديل اللي شغال عندك',
+            'شو الموديل المستخدم',
+            'أي موديل تستخدم',
+            'اي موديل تستخدم',
+            'ما هو الموديل المستخدم',
+            'what model are you using',
+            'which model are you using',
+            'what ai model are you using',
+            'which ai model do you use',
+            'which provider are you using',
+            'what provider are you using',
+            'are you using groq',
+            'هل تستخدم groq',
+            'هل تستعمل groq',
+        ]);
+    }
+
+    private function isGeneralManagerIdentityQuestion(
+        string $text,
+    ): bool {
+        if ($this->containsAny($text, [
+            'المدير التنفيذي',
+            'مدير تنفيذي',
+            'ceo',
+            'chief executive',
+            'executive director',
+        ])) {
+            return false;
+        }
+
+        return $this->containsAny($text, [
+            'انو المدير عندكم',
+            'منو المدير عندكم',
+            'مينو المدير عندكم',
+            'مين المدير عندكم',
+            'من المدير عندكم',
+            'مين المدير بالشركة',
+            'منو المدير بالشركة',
+            'who is your manager',
+            'who is the manager at pr per hour',
         ]);
     }
 
@@ -531,6 +601,14 @@ final readonly class PrPerHourSmartResponder
         return $this->containsAny($text, [
             'كيف اتواصل',
             'كيف أتواصل',
+            'بدي اتواصل معكم',
+            'بدي أتواصل معكم',
+            'اتواصل معكم كيف',
+            'أتواصل معكم كيف',
+            'كيف بقدر اتواصل معكم',
+            'كيف بقدر أتواصل معكم',
+            'وين اتواصل معكم',
+            'وين أتواصل معكم',
             'طرق التواصل',
             'بيانات التواصل',
             'معلومات التواصل',
