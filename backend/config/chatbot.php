@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     'assistant' => [
-        'name' => 'PRIA AI',
+        'name' => 'PRIA',
     ],
 
     /*
@@ -13,7 +13,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | The chatbot must never depend directly on one AI vendor.
-    | "fallback" keeps PRIA AI operational without an external provider.
+    | "fallback" keeps PRIA operational without an external provider.
     |
     */
     'ai' => [
@@ -116,4 +116,83 @@ return [
             ],
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Organizations PR Per Hour Has Worked With
+    |--------------------------------------------------------------------------
+    |
+    | Authoritative list used by PRIA. "Worked with" is intentionally used
+    | instead of assuming every relationship was a client or partnership.
+    |
+    */
+    'worked_with' => [
+        [
+            'name_en' => 'Al-Quds Open University',
+            'name_ar' => 'جامعة القدس المفتوحة',
+            'type_en' => 'Public University • Blended Learning',
+            'type_ar' => 'جامعة عامة • تعليم مدمج',
+        ],
+        [
+            'name_en' => 'Koton',
+            'name_ar' => 'Koton',
+            'type_en' => 'Global Fashion & Retail',
+            'type_ar' => 'أزياء وتجزئة عالمية',
+        ],
+        [
+            'name_en' => 'Karawan Studio',
+            'name_ar' => 'ستوديو الكروان ديجيتال',
+            'type_en' => 'Photography & Digital Production',
+            'type_ar' => 'تصوير • إنتاج رقمي',
+        ],
+        [
+            'name_en' => "Rural Women's Development Society (RWDS)",
+            'name_ar' => 'جمعية تنمية المرأة الريفية',
+            'type_en' => 'Palestinian Nonprofit Organization',
+            'type_ar' => 'مؤسسة أهلية فلسطينية غير ربحية',
+        ],
+        [
+            'name_en' => 'Dyarna Real Estate Development & Investment',
+            'name_ar' => 'شركة ديارنا للتطوير العقاري والاستثمار',
+            'type_en' => 'Real Estate Development & Investment',
+            'type_ar' => 'تطوير عقاري • استثمار',
+        ],
+        [
+            'name_en' => 'REFORM',
+            'name_ar' => 'المؤسسة الفلسطينية للتمكين والتنمية المحلية - REFORM',
+            'type_en' => 'Independent Nonprofit Organization',
+            'type_ar' => 'منظمة أهلية مستقلة غير ربحية',
+        ],
+        [
+            'name_en' => 'Nablus Municipality',
+            'name_ar' => 'بلدية نابلس',
+            'type_en' => 'Municipality • Public Services',
+            'type_ar' => 'هيئة محلية • خدمات عامة',
+        ],
+        [
+            'name_en' => 'Palestinian Business Forum',
+            'name_ar' => 'ملتقى رجال الأعمال الفلسطيني',
+            'type_en' => 'Independent Nonprofit Organization',
+            'type_ar' => 'مؤسسة أهلية مستقلة غير ربحية',
+        ],
+        [
+            'name_en' => 'Al Qaser Hotel',
+            'name_ar' => 'فندق القصر',
+            'type_en' => 'Hotel • Hospitality',
+            'type_ar' => 'فندق • ضيافة',
+        ],
+        [
+            'name_en' => 'Tajer',
+            'name_ar' => 'Tajer',
+            'type_en' => 'Company',
+            'type_ar' => 'شركة',
+        ],
+        [
+            'name_en' => 'Mohandam',
+            'name_ar' => 'مهندم',
+            'type_en' => "Men's Fashion",
+            'type_ar' => 'أزياء رجالية',
+        ],
+    ],
+
 ];

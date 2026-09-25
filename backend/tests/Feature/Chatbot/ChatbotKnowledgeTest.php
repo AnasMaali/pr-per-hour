@@ -192,7 +192,7 @@ final class ChatbotKnowledgeTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'You are PRIA AI',
+            'You are PRIA',
             $prompt,
         );
 

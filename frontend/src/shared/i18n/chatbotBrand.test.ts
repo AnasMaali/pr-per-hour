@@ -3,7 +3,7 @@ import en from '@/shared/i18n/locales/en/chatbot.json'
 import ar from '@/shared/i18n/locales/ar/chatbot.json'
 
 /**
- * Guards the PRIA AI rebrand: the chatbot's public-facing translations must
+ * Guards the PRIA rebrand: the chatbot's public-facing translations must
  * never identify the assistant as "Anas" again, in either language. The
  * real person Anas Maali is still a valid subject elsewhere (e.g. the
  * leadership section in home.json) — this test only covers the chatbot
@@ -22,8 +22,8 @@ describe('chatbot translations (brand identity)', () => {
   it.each([
     ['en', en],
     ['ar', ar],
-  ])('names the assistant "PRIA AI" (%s)', (_locale, namespace) => {
-    expect(namespace.assistantName).toBe('PRIA AI')
+  ])('names the assistant "PRIA" (%s)', (_locale, namespace) => {
+    expect(namespace.assistantName).toBe('PRIA')
   })
 
   it('gives the assistant the "PR Per Hour AI Assistant" subtitle in English', () => {

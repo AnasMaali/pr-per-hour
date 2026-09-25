@@ -16,8 +16,8 @@ describe('detectMessageDirection', () => {
     })
   })
 
-  it('stays rtl/ar for Arabic text containing the brand name "PRIA AI"', () => {
-    const message = 'أهلاً! أنا PRIA AI، مساعدك في PR Per Hour.'
+  it('stays rtl/ar for Arabic text containing the brand name "PRIA"', () => {
+    const message = 'أهلاً! أنا PRIA، مساعدك في PR Per Hour.'
     expect(detectMessageDirection(message)).toEqual({ dir: 'rtl', lang: 'ar' })
   })
 
@@ -68,7 +68,7 @@ describe('detectMessageDirection', () => {
 
   it('excludes URLs and email addresses from the script count so they never flip a mostly-Arabic message to English', () => {
     const message =
-      'أهلاً! أنا PRIA AI من PR Per Hour. يمكنك زيارة ' +
+      'أهلاً! أنا PRIA من PR Per Hour. يمكنك زيارة ' +
       'https://prperhour.com/services/strategic-communication ' +
       'أو مراسلتنا عبر info@prperhour.com وسيسعدنا مساعدتك.'
 

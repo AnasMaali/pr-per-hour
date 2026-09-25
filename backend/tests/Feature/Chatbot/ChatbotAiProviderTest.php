@@ -128,7 +128,7 @@ final class ChatbotAiProviderTest extends TestCase
 
             self::assertSame('system', $messages[0]['role']);
             self::assertStringContainsString('PR Per Hour', $messages[0]['content']);
-            self::assertStringContainsString('PRIA AI', $messages[0]['content']);
+            self::assertStringContainsString('PRIA', $messages[0]['content']);
             self::assertStringContainsString('Anas Maali', $messages[0]['content']);
 
             // history_messages = 2, so only the 2 most recent messages are sent:
@@ -768,7 +768,7 @@ final class ChatbotAiProviderTest extends TestCase
         $replyMessage = (string) $response->json('data.reply.message');
 
         $this->assertStringNotContainsString("Hi, I'm Anas", $replyMessage);
-        $this->assertStringNotContainsString("Hi, I'm PRIA AI", $replyMessage);
+        $this->assertStringNotContainsString("Hi, I'm PRIA", $replyMessage);
         $this->assertStringContainsString('PR Per Hour', $replyMessage);
     }
 
@@ -825,7 +825,7 @@ final class ChatbotAiProviderTest extends TestCase
         // The emergency path itself never mentions the assistant's name
         // (see the two tests above) — but that must not regress the
         // ordinary, non-emergency fallback greeting, which still
-        // introduces itself as PRIA AI.
+        // introduces itself as PRIA.
         config()->set('chatbot.ai.driver', 'fallback');
 
         $start = $this->startConversation();
@@ -836,7 +836,7 @@ final class ChatbotAiProviderTest extends TestCase
         )->assertCreated();
 
         $this->assertStringContainsString(
-            'PRIA AI',
+            'PRIA',
             (string) $response->json('data.reply.message'),
         );
     }
@@ -1162,7 +1162,7 @@ final class ChatbotAiProviderTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'PRIA AI',
+            'PRIA',
             $reply,
         );
 
@@ -1637,7 +1637,7 @@ final class ChatbotAiProviderTest extends TestCase
         );
 
         $this->assertStringNotContainsString(
-            "Hi, I'm PRIA AI",
+            "Hi, I'm PRIA",
             $reply,
         );
     }

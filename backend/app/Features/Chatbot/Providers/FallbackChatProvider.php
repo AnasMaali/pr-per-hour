@@ -10,14 +10,14 @@ use App\Features\Chatbot\DTOs\ChatProviderResult;
 use App\Features\Chatbot\Support\PrPerHourSmartResponder;
 
 /**
- * Local, offline substitute for a real AI provider. Keeps PRIA AI useful
+ * Local, offline substitute for a real AI provider. Keeps PRIA useful
  * whenever no provider is configured, the configured provider fails, or
  * its response fails the quality guard. Must never throw: this is the
  * last line of defense before the visitor sees an error.
  *
  * The reply must never hint that an external AI provider was involved,
  * failed, or is unavailable — from the visitor's perspective this is
- * simply PRIA AI answering. Provider fallback is an internal implementation
+ * simply PRIA answering. Provider fallback is an internal implementation
  * detail, not a frontend-facing error.
  *
  * It's also conversation-aware: it only introduces/greets when this is
@@ -35,7 +35,7 @@ final class FallbackChatProvider implements ChatProvider
     public function generate(ChatProviderRequest $request): ChatProviderResult
     {
         $company = (array) config('chatbot.company', []);
-        $assistantName = (string) config('chatbot.assistant.name', 'PRIA AI');
+        $assistantName = (string) config('chatbot.assistant.name', 'PRIA');
 
         $isArabic = self::messageLooksArabic($request);
         $isFirstInteraction = $this->isFirstInteraction($request);
@@ -89,7 +89,7 @@ final class FallbackChatProvider implements ChatProvider
 
     /**
      * "First interaction" means no prior assistant turn exists yet in the
-     * bounded history — i.e. PRIA AI hasn't said anything in this
+     * bounded history — i.e. PRIA hasn't said anything in this
      * conversation so far, so a greeting/introduction is still natural.
      */
     private function isFirstInteraction(ChatProviderRequest $request): bool

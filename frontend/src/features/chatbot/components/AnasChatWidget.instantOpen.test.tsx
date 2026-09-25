@@ -53,7 +53,7 @@ describe('AnasChatWidget (instant-open shell)', () => {
     const user = userEvent.setup()
     await user.click(
       screen.getByRole('button', {
-        name: "Chat with PRIA AI, PR Per Hour's AI assistant",
+        name: "Chat with PRIA, PR Per Hour's AI assistant",
       }),
     )
 
@@ -61,6 +61,6 @@ describe('AnasChatWidget (instant-open shell)', () => {
     // already be visible, synchronously, not `null`.
     const dialog = screen.getByRole('dialog')
     expect(dialog).toHaveAttribute('aria-busy', 'true')
-    expect(dialog).toHaveTextContent('PRIA AI')
+    expect(dialog).toHaveTextContent('PRIA')
   })
 })

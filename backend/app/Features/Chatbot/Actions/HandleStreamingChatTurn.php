@@ -142,7 +142,7 @@ final readonly class HandleStreamingChatTurn
 
             if (! $quality->accepted) {
                 Log::warning(
-                    'Authoritative streamed PRIA AI reply failed quality guard; using local fallback.',
+                    'Authoritative streamed PRIA reply failed quality guard; using local fallback.',
                     ['issues' => $quality->issues],
                 );
             }

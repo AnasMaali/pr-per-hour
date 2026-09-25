@@ -18,7 +18,7 @@ function renderLauncher(onPreload = vi.fn()) {
       onPreload={onPreload}
     />,
   )
-  return screen.getByRole('button', { name: /PRIA AI/ })
+  return screen.getByRole('button', { name: /PRIA/ })
 }
 
 describe('AnasLauncher (preload)', () => {
@@ -76,7 +76,7 @@ describe('AnasLauncher (preload)', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: /PRIA AI/ }))
+    await user.click(screen.getByRole('button', { name: /PRIA/ }))
 
     expect(onOpen).toHaveBeenCalledTimes(1)
   })

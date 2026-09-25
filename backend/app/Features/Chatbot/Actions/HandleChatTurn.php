@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Log;
  * Orchestrates one visitor/client chat turn:
  * persist the incoming message, ask the configured AI provider for a
  * reply (outside of any database transaction), run it through the
- * deterministic quality guard, then persist PRIA AI's reply.
+ * deterministic quality guard, then persist PRIA's reply.
  *
  * At most one external AI generation call happens per turn. Authoritative first-party questions bypass the AI provider entirely. A provider
  * failure never loses the visitor's message, because ChatProviderManager
@@ -92,7 +92,7 @@ final readonly class HandleChatTurn
              * responder is deterministic first-party code, but keep the
              * same local safety backstop as every other reply path.
              */
-            Log::warning('Authoritative PRIA AI reply failed quality guard; using local fallback.', [
+            Log::warning('Authoritative PRIA reply failed quality guard; using local fallback.', [
                 'issues' => $quality->issues,
             ]);
 
@@ -108,7 +108,7 @@ final readonly class HandleChatTurn
             return $quality->text;
         }
 
-        Log::warning('PRIA AI response failed quality guard; using local fallback.', [
+        Log::warning('PRIA response failed quality guard; using local fallback.', [
             'issues' => $quality->issues,
             'provider' => $draft->provider,
             'model' => $draft->model,

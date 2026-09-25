@@ -123,7 +123,7 @@ async function openPanel() {
   const user = userEvent.setup()
   await user.click(
     screen.getByRole('button', {
-      name: "Chat with PRIA AI, PR Per Hour's AI assistant",
+      name: "Chat with PRIA, PR Per Hour's AI assistant",
     }),
   )
   await screen.findByRole('dialog')
@@ -155,7 +155,7 @@ describe('AnasChatWidget', () => {
 
     await openPanel()
 
-    expect(screen.getByText("Hi, I'm PRIA AI.")).toBeInTheDocument()
+    expect(screen.getByText("Hi, I'm PRIA.")).toBeInTheDocument()
     expect(mockedChatbotApi.startConversation).toHaveBeenCalledTimes(1)
   })
 
@@ -230,7 +230,7 @@ describe('AnasChatWidget', () => {
     await waitFor(() => {
       expect(mockedChatbotApi.startConversation).toHaveBeenCalledTimes(1)
     })
-    expect(screen.getByText("Hi, I'm PRIA AI.")).toBeInTheDocument()
+    expect(screen.getByText("Hi, I'm PRIA.")).toBeInTheDocument()
   })
 
   it('sends a quick action prompt through the streaming API and renders both sides of the turn', async () => {
@@ -271,13 +271,13 @@ describe('AnasChatWidget', () => {
     renderWithProviders(<AnasChatWidget />)
     const user = await openPanel()
 
-    const textarea = await screen.findByLabelText('Message PRIA AI')
+    const textarea = await screen.findByLabelText('Message PRIA')
     await user.type(textarea, 'What services do you offer?')
     await user.keyboard('{Enter}')
 
     expect(screen.getByText('What services do you offer?')).toBeInTheDocument()
     expect(textarea).toBeDisabled()
-    expect(screen.getByRole('status')).toHaveTextContent('PRIA AI is thinking')
+    expect(screen.getByRole('status')).toHaveTextContent('PRIA is thinking')
 
     handlers.onDelta('Here is how we can help.')
     handlers.onDone(botMessage('Here is how we can help.'))
@@ -320,7 +320,7 @@ describe('AnasChatWidget', () => {
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: 'Try again' }))
 
-    expect(await screen.findByText("Hi, I'm PRIA AI.")).toBeInTheDocument()
+    expect(await screen.findByText("Hi, I'm PRIA.")).toBeInTheDocument()
   })
 
   it('keeps a failed send visible with a working retry action', async () => {
@@ -329,7 +329,7 @@ describe('AnasChatWidget', () => {
     renderWithProviders(<AnasChatWidget />)
     const user = await openPanel()
 
-    const textarea = await screen.findByLabelText('Message PRIA AI')
+    const textarea = await screen.findByLabelText('Message PRIA')
     await user.type(textarea, 'Hello?')
     await user.keyboard('{Enter}')
 
@@ -356,7 +356,7 @@ describe('AnasChatWidget', () => {
     await waitFor(() => {
       expect(
         screen.getByRole('button', {
-          name: "Chat with PRIA AI, PR Per Hour's AI assistant",
+          name: "Chat with PRIA, PR Per Hour's AI assistant",
         }),
       ).toHaveFocus()
     })
@@ -367,7 +367,7 @@ describe('AnasChatWidget', () => {
     await openPanel()
 
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: 'Close PRIA AI' }))
+    await user.click(screen.getByRole('button', { name: 'Close PRIA' }))
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -404,12 +404,12 @@ describe('AnasChatWidget', () => {
     const user = userEvent.setup()
     await user.click(
       screen.getByRole('button', {
-        name: 'تحدّث مع PRIA AI، المساعد الذكي لدى PR Per Hour',
+        name: 'تحدّث مع PRIA، المساعد الذكي لدى PR Per Hour',
       }),
     )
     await screen.findByRole('dialog')
 
-    expect(await screen.findByText('مرحباً، أنا PRIA AI، المساعد الذكي لدى PR Per Hour.')).toBeInTheDocument()
+    expect(await screen.findByText('مرحباً، أنا PRIA، المساعد الذكي لدى PR Per Hour.')).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'ساعدني في اختيار الخدمة المناسبة' }),
     ).toBeInTheDocument()

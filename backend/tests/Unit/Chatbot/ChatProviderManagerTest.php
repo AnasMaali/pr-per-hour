@@ -91,7 +91,7 @@ final class ChatProviderManagerTest extends TestCase
             $this->assertStringNotContainsString($genderedForm, $result->content);
         }
 
-        foreach (['Groq', 'API', 'quota', 'model', 'unavailable', 'PRIA AI', 'provider', 'technical failure'] as $forbidden) {
+        foreach (['Groq', 'API', 'quota', 'model', 'unavailable', 'PRIA', 'provider', 'technical failure'] as $forbidden) {
             $this->assertStringNotContainsStringIgnoringCase($forbidden, $result->content);
         }
     }
@@ -111,7 +111,7 @@ final class ChatProviderManagerTest extends TestCase
         $this->assertStringContainsString('PR Per Hour', $result->content);
         $this->assertStringContainsString('continue exploring', $result->content);
 
-        foreach (['Groq', 'API', 'quota', 'model', 'unavailable', 'PRIA AI', 'provider', 'technical failure'] as $forbidden) {
+        foreach (['Groq', 'API', 'quota', 'model', 'unavailable', 'PRIA', 'provider', 'technical failure'] as $forbidden) {
             $this->assertStringNotContainsStringIgnoringCase($forbidden, $result->content);
         }
     }
@@ -200,7 +200,7 @@ final class ChatProviderManagerTest extends TestCase
 
         $this->assertSame([], $received, 'No raw fragment should ever reach the caller for this failure mode.');
         $this->assertTrue($result->fallbackUsed);
-        $this->assertStringContainsString("Hi, I'm PRIA AI", $result->content);
+        $this->assertStringContainsString("Hi, I'm PRIA", $result->content);
     }
 
     public function test_stream_gracefully_completes_from_partial_content_after_a_mid_stream_failure(): void
@@ -260,6 +260,6 @@ final class ChatProviderManagerTest extends TestCase
         );
 
         $this->assertTrue($result->fallbackUsed);
-        $this->assertStringContainsString("Hi, I'm PRIA AI", $result->content);
+        $this->assertStringContainsString("Hi, I'm PRIA", $result->content);
     }
 }

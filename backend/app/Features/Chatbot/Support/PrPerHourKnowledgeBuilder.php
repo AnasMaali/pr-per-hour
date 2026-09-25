@@ -104,6 +104,19 @@ final class PrPerHourKnowledgeBuilder
         }
 
         $lines[] = '';
+        $lines[] = 'ORGANIZATIONS WE HAVE WORKED WITH';
+
+        foreach ((array) config('chatbot.worked_with', []) as $organization) {
+            $lines[] = sprintf(
+                '- %s / %s — %s / %s',
+                $organization['name_en'] ?? '',
+                $organization['name_ar'] ?? '',
+                $organization['type_en'] ?? '',
+                $organization['type_ar'] ?? '',
+            );
+        }
+
+        $lines[] = '';
         $lines[] = 'SERVICES';
 
         foreach (

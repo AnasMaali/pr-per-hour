@@ -167,10 +167,14 @@ final readonly class PrPerHourSmartResponder
             return null;
         }
 
+        if ($this->isWorkedWithQuestion($text)) {
+            return $this->workedWithReply($isArabic);
+        }
+
         if ($this->isInternalTechnicalQuestion($text)) {
             return $isArabic
-                ? 'لا أشارك تفاصيل الموديل أو مزود الذكاء الاصطناعي أو التعليمات الداخلية للنظام. أنا **PRIA AI**، ومهمتي تقديم معلومات دقيقة عن PR Per Hour وخدماتها.'
-                : "I can't share internal model, AI-provider, system-prompt, or implementation details. I'm **PRIA AI**, and I'm here to provide accurate information about PR Per Hour and its services.";
+                ? 'لا أشارك تفاصيل الموديل أو مزود الذكاء الاصطناعي أو التعليمات الداخلية للنظام. أنا **PRIA**، ومهمتي تقديم معلومات دقيقة عن PR Per Hour وخدماتها.'
+                : "I can't share internal model, AI-provider, system-prompt, or implementation details. I'm **PRIA**, and I'm here to provide accurate information about PR Per Hour and its services.";
         }
 
         $asksTechnology = $this->isTechnologyIdentityQuestion(
@@ -340,6 +344,77 @@ final readonly class PrPerHourSmartResponder
             "- Email: {$email}",
             "- Phone: {$phone}",
         ]);
+    }
+
+    private function isWorkedWithQuestion(
+        string $text,
+    ): bool {
+        return $this->containsAny($text, [
+            'اشتغلتو معها',
+            'اشتغلتوا معها',
+            'اشتغلت معها',
+            'عملتو معها',
+            'عملتوا معها',
+            'عملتم معها',
+            'جهات عملنا معها',
+            'الشركات الي اشتغلتو معها',
+            'الشركات اللي اشتغلتو معها',
+            'الشركات التي عملتم معها',
+            'مين عملاءكم',
+            'مين عملائكم',
+            'عملاءكم',
+            'عملائكم',
+            'مين زباينكم',
+            'الشركات الي تعاملتو معها',
+            'الشركات اللي تعاملتوا معها',
+            'worked with',
+            'companies you worked with',
+            'organizations you worked with',
+            'who have you worked with',
+            'your clients',
+            'your customers',
+        ]);
+    }
+
+    private function workedWithReply(
+        bool $isArabic,
+    ): string {
+        $organizations = (array) config(
+            'chatbot.worked_with',
+            [],
+        );
+
+        if ($organizations === []) {
+            return $isArabic
+                ? 'لا تتوفر حاليًا قائمة معتمدة بالجهات التي عملت معها PR Per Hour.'
+                : 'An authoritative list of organizations PR Per Hour has worked with is not currently available.';
+        }
+
+        $lines = [];
+
+        foreach ($organizations as $organization) {
+            $name = $isArabic
+                ? ($organization['name_ar'] ?? $organization['name_en'] ?? '')
+                : ($organization['name_en'] ?? $organization['name_ar'] ?? '');
+
+            $type = $isArabic
+                ? ($organization['type_ar'] ?? '')
+                : ($organization['type_en'] ?? '');
+
+            if ($name === '') {
+                continue;
+            }
+
+            $lines[] = $type !== ''
+                ? "- **{$name}** — {$type}"
+                : "- **{$name}**";
+        }
+
+        $intro = $isArabic
+            ? "من الجهات التي عملت معها **PR Per Hour**:"
+            : "Organizations **PR Per Hour** has worked with include:";
+
+        return $intro."\n\n".implode("\n", $lines);
     }
 
     private function isInternalTechnicalQuestion(

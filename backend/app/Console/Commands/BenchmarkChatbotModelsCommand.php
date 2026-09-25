@@ -36,7 +36,7 @@ final class BenchmarkChatbotModelsCommand extends Command
                             {--retry-wait=65 : Seconds before retrying an HTTP 429}
                             {--only= : Comma-separated conversation indices to run}';
 
-    protected $description = 'Benchmark PRIA AI candidate Groq models using production prompt and quality rules';
+    protected $description = 'Benchmark PRIA candidate Groq models using production prompt and quality rules';
 
     /**
      * Only scenarios where model quality actually matters.

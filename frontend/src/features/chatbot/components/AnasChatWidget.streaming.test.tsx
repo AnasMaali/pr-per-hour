@@ -78,7 +78,7 @@ function botMessage(text: string): ChatMessageDto {
   return { sender: 'bot', message: text, created_at: '2026-01-01T00:00:02Z' }
 }
 
-async function openPanel(label = "Chat with PRIA AI, PR Per Hour's AI assistant") {
+async function openPanel(label = "Chat with PRIA, PR Per Hour's AI assistant") {
   const user = userEvent.setup()
   await user.click(screen.getByRole('button', { name: label }))
   await screen.findByRole('dialog')
@@ -106,12 +106,12 @@ describe('AnasChatWidget (streaming UX)', () => {
     renderWithProviders(<AnasChatWidget />)
     const user = await openPanel()
 
-    const textarea = await screen.findByLabelText('Message PRIA AI')
+    const textarea = await screen.findByLabelText('Message PRIA')
     await user.type(textarea, 'What AI services do you offer?')
     await user.keyboard('{Enter}')
 
     // Still thinking — no assistant bubble yet.
-    expect(screen.getByRole('status')).toHaveTextContent('PRIA AI is thinking')
+    expect(screen.getByRole('status')).toHaveTextContent('PRIA is thinking')
     expect(screen.queryByText(/Data Analysis/)).not.toBeInTheDocument()
 
     function assistantBodyText(): string | null | undefined {
@@ -158,9 +158,9 @@ describe('AnasChatWidget (streaming UX)', () => {
     })
 
     renderWithProviders(<AnasChatWidget />)
-    const user = await openPanel('تحدّث مع PRIA AI، المساعد الذكي لدى PR Per Hour')
+    const user = await openPanel('تحدّث مع PRIA، المساعد الذكي لدى PR Per Hour')
 
-    const textarea = await screen.findByLabelText('أرسل رسالة إلى PRIA AI')
+    const textarea = await screen.findByLabelText('أرسل رسالة إلى PRIA')
     await user.type(textarea, 'مين المؤسس؟')
     await user.keyboard('{Enter}')
 
@@ -186,7 +186,7 @@ describe('AnasChatWidget (streaming UX)', () => {
     const { unmount } = renderWithProviders(<AnasChatWidget />)
     const user = await openPanel()
 
-    const textarea = await screen.findByLabelText('Message PRIA AI')
+    const textarea = await screen.findByLabelText('Message PRIA')
     await user.type(textarea, 'Hello')
     await user.keyboard('{Enter}')
 
