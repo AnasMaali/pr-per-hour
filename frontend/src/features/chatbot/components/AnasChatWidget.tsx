@@ -3,13 +3,24 @@ import { env } from '@/shared/config/env'
 import { useReducedMotion } from '@/shared/motion'
 import { useChatSession } from '@/features/chatbot/hooks/useChatSession'
 import { AnasLauncher } from '@/features/chatbot/components/AnasLauncher'
+import { AnasPanelShell } from '@/features/chatbot/components/AnasPanelShell'
+import {
+  loadAnasPanelModule,
+  preloadAnasPanel,
+} from '@/features/chatbot/utils/preloadAnasPanel'
 import '@/features/chatbot/styles/anas-widget.css'
 
 const AnasPanel = lazy(() =>
-  import('@/features/chatbot/components/AnasPanel').then((mod) => ({
-    default: mod.AnasPanel,
-  })),
+  loadAnasPanelModule().then((mod) => ({ default: mod.AnasPanel })),
 )
+
+type IdleWindow = Window & {
+  requestIdleCallback?: (
+    callback: () => void,
+    options?: { timeout?: number },
+  ) => number
+  cancelIdleCallback?: (handle: number) => void
+}
 
 /**
  * Global mount point for Anas. Renders nothing when the chatbot feature
@@ -52,6 +63,26 @@ export function AnasChatWidget() {
     }
   }, [isClosed])
 
+  // Idle-time preload: once the page has settled after becoming
+  // interactive, start fetching the panel chunk in the background even if
+  // the visitor never hovers or focuses the launcher first. Falls back to
+  // a short timeout on browsers without requestIdleCallback (e.g. Safari).
+  useEffect(() => {
+    if (!env.features.chatbot) return
+
+    const idleWindow = window as IdleWindow
+
+    if (typeof idleWindow.requestIdleCallback === 'function') {
+      const handle = idleWindow.requestIdleCallback(preloadAnasPanel, {
+        timeout: 2000,
+      })
+      return () => idleWindow.cancelIdleCallback?.(handle)
+    }
+
+    const timeout = window.setTimeout(preloadAnasPanel, 1500)
+    return () => window.clearTimeout(timeout)
+  }, [])
+
   if (!env.features.chatbot) {
     return null
   }
@@ -69,10 +100,19 @@ export function AnasChatWidget() {
         unreadCount={chat.state.unread}
         reducedMotion={reducedMotion}
         onOpen={chat.openPanel}
+        onPreload={preloadAnasPanel}
       />
 
       {!isClosed ? (
-        <Suspense fallback={null}>
+        <Suspense
+          fallback={
+            <AnasPanelShell
+              panelId={panelId}
+              titleId={titleId}
+              reducedMotion={reducedMotion}
+            />
+          }
+        >
           <AnasPanel
             panelId={panelId}
             titleId={titleId}

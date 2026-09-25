@@ -5,10 +5,11 @@ import { renderWithProviders } from '@/test/renderWithProviders'
 import { testI18n } from '@/test/testI18n'
 import { AnasChatWidget } from '@/features/chatbot/components/AnasChatWidget'
 import { chatbotApi } from '@/features/chatbot/api/chatbotApi'
+import { streamChatMessage } from '@/features/chatbot/api/chatbotStream'
 import { ApiClientError } from '@/shared/api/errors'
 import type {
   ChatConversationDto,
-  ChatTurnDto,
+  ChatMessageDto,
 } from '@/features/chatbot/types/chatbot.types'
 
 // AnasChatWidget code-splits the panel via `lazy(() => import('./AnasPanel'))`
@@ -81,8 +82,10 @@ vi.mock('@/features/services/queries/usePublicCategoriesQuery', () => ({
 }))
 
 vi.mock('@/features/chatbot/api/chatbotApi')
+vi.mock('@/features/chatbot/api/chatbotStream')
 
 const mockedChatbotApi = vi.mocked(chatbotApi)
+const mockedStreamChatMessage = vi.mocked(streamChatMessage)
 
 function conversation(
   overrides: Partial<ChatConversationDto> = {},
@@ -98,18 +101,29 @@ function conversation(
   }
 }
 
-function turn(userText: string, replyText: string): ChatTurnDto {
-  return {
-    message: { sender: 'visitor', message: userText, created_at: '2026-01-01T00:00:01Z' },
-    reply: { sender: 'bot', message: replyText, created_at: '2026-01-01T00:00:02Z' },
-  }
+function botMessage(text: string): ChatMessageDto {
+  return { sender: 'bot', message: text, created_at: '2026-01-01T00:00:02Z' }
+}
+
+/** Makes the mocked stream immediately deliver one delta, then complete. */
+function mockStreamReply(replyText: string) {
+  mockedStreamChatMessage.mockImplementation(async (_token, _message, handlers) => {
+    handlers.onDelta(replyText)
+    handlers.onDone(botMessage(replyText))
+  })
+}
+
+function mockStreamError() {
+  mockedStreamChatMessage.mockImplementation(async (_token, _message, handlers) => {
+    handlers.onError()
+  })
 }
 
 async function openPanel() {
   const user = userEvent.setup()
   await user.click(
     screen.getByRole('button', {
-      name: "Chat with Anas, PR Per Hour's AI assistant",
+      name: "Chat with PRIA, PR Per Hour's AI assistant",
     }),
   )
   await screen.findByRole('dialog')
@@ -126,10 +140,7 @@ beforeEach(() => {
     success: true,
     data: conversation(),
   })
-  mockedChatbotApi.sendMessage.mockResolvedValue({
-    success: true,
-    data: turn('hi', 'hello'),
-  })
+  mockStreamReply('hello')
 })
 
 afterEach(() => {
@@ -144,7 +155,7 @@ describe('AnasChatWidget', () => {
 
     await openPanel()
 
-    expect(screen.getByText("Hi, I'm Anas.")).toBeInTheDocument()
+    expect(screen.getByText("Hi, I'm PRIA.")).toBeInTheDocument()
     expect(mockedChatbotApi.startConversation).toHaveBeenCalledTimes(1)
   })
 
@@ -219,17 +230,11 @@ describe('AnasChatWidget', () => {
     await waitFor(() => {
       expect(mockedChatbotApi.startConversation).toHaveBeenCalledTimes(1)
     })
-    expect(screen.getByText("Hi, I'm Anas.")).toBeInTheDocument()
+    expect(screen.getByText("Hi, I'm PRIA.")).toBeInTheDocument()
   })
 
-  it('sends a quick action prompt through the real API and renders both sides of the turn', async () => {
-    mockedChatbotApi.sendMessage.mockResolvedValue({
-      success: true,
-      data: turn(
-        "I'm not sure which service fits my needs — can you help me find the right one?",
-        'Based on your goals, Strategic Communication may be the right fit.',
-      ),
-    })
+  it('sends a quick action prompt through the streaming API and renders both sides of the turn', async () => {
+    mockStreamReply('Based on your goals, Strategic Communication may be the right fit.')
 
     renderWithProviders(<AnasChatWidget />)
     await openPanel()
@@ -239,9 +244,11 @@ describe('AnasChatWidget', () => {
       screen.getByRole('button', { name: 'Find the right service' }),
     )
 
-    expect(mockedChatbotApi.sendMessage).toHaveBeenCalledWith(
+    expect(mockedStreamChatMessage).toHaveBeenCalledWith(
       'token-abc',
       "I'm not sure which service fits my needs — can you help me find the right one?",
+      expect.anything(),
+      expect.anything(),
     )
 
     expect(
@@ -252,28 +259,29 @@ describe('AnasChatWidget', () => {
   })
 
   it('sends a typed message and disables the composer while the turn is in flight', async () => {
-    let resolveSend!: (value: { success: true; data: ChatTurnDto }) => void
-    mockedChatbotApi.sendMessage.mockReturnValue(
-      new Promise((resolve) => {
-        resolveSend = resolve
-      }),
-    )
+    let handlers!: Parameters<typeof streamChatMessage>[2]
+    let resolveStream!: () => void
+    mockedStreamChatMessage.mockImplementationOnce((_token, _message, h) => {
+      handlers = h
+      return new Promise<void>((resolve) => {
+        resolveStream = resolve
+      })
+    })
 
     renderWithProviders(<AnasChatWidget />)
     const user = await openPanel()
 
-    const textarea = await screen.findByLabelText('Message Anas')
+    const textarea = await screen.findByLabelText('Message PRIA')
     await user.type(textarea, 'What services do you offer?')
     await user.keyboard('{Enter}')
 
     expect(screen.getByText('What services do you offer?')).toBeInTheDocument()
     expect(textarea).toBeDisabled()
-    expect(screen.getByRole('status')).toHaveTextContent('Anas is thinking')
+    expect(screen.getByRole('status')).toHaveTextContent('PRIA is thinking')
 
-    resolveSend({
-      success: true,
-      data: turn('What services do you offer?', 'Here is how we can help.'),
-    })
+    handlers.onDelta('Here is how we can help.')
+    handlers.onDone(botMessage('Here is how we can help.'))
+    resolveStream()
 
     expect(await screen.findByText('Here is how we can help.')).toBeInTheDocument()
     await waitFor(() => expect(textarea).not.toBeDisabled())
@@ -312,39 +320,23 @@ describe('AnasChatWidget', () => {
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: 'Try again' }))
 
-    expect(await screen.findByText("Hi, I'm Anas.")).toBeInTheDocument()
+    expect(await screen.findByText("Hi, I'm PRIA.")).toBeInTheDocument()
   })
 
   it('keeps a failed send visible with a working retry action', async () => {
-    mockedChatbotApi.sendMessage.mockRejectedValueOnce(
-      new ApiClientError({
-        message: 'Network Error',
-        status: null,
-        errorCode: null,
-        requestId: null,
-        errors: null,
-        isNetworkError: true,
-        isUnauthorized: false,
-        isForbidden: false,
-        isValidationError: false,
-        isInactiveAccount: false,
-      }),
-    )
+    mockStreamError()
 
     renderWithProviders(<AnasChatWidget />)
     const user = await openPanel()
 
-    const textarea = await screen.findByLabelText('Message Anas')
+    const textarea = await screen.findByLabelText('Message PRIA')
     await user.type(textarea, 'Hello?')
     await user.keyboard('{Enter}')
 
     expect(await screen.findByText("This message wasn't sent.")).toBeInTheDocument()
     expect(screen.getByText('Hello?')).toBeInTheDocument()
 
-    mockedChatbotApi.sendMessage.mockResolvedValueOnce({
-      success: true,
-      data: turn('Hello?', 'Hi! How can I help?'),
-    })
+    mockStreamReply('Hi! How can I help?')
 
     await user.click(screen.getByRole('button', { name: 'Retry' }))
 
@@ -364,7 +356,7 @@ describe('AnasChatWidget', () => {
     await waitFor(() => {
       expect(
         screen.getByRole('button', {
-          name: "Chat with Anas, PR Per Hour's AI assistant",
+          name: "Chat with PRIA, PR Per Hour's AI assistant",
         }),
       ).toHaveFocus()
     })
@@ -375,7 +367,7 @@ describe('AnasChatWidget', () => {
     await openPanel()
 
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: 'Close Anas' }))
+    await user.click(screen.getByRole('button', { name: 'Close PRIA' }))
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -412,12 +404,12 @@ describe('AnasChatWidget', () => {
     const user = userEvent.setup()
     await user.click(
       screen.getByRole('button', {
-        name: 'تحدّث مع Anas، المساعد الذكي لدى PR Per Hour',
+        name: 'تحدّث مع PRIA، المساعد الذكي لدى PR Per Hour',
       }),
     )
     await screen.findByRole('dialog')
 
-    expect(await screen.findByText('مرحباً، أنا Anas.')).toBeInTheDocument()
+    expect(await screen.findByText('مرحباً، أنا PRIA، المساعد الذكي لدى PR Per Hour.')).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'ساعدني في اختيار الخدمة المناسبة' }),
     ).toBeInTheDocument()

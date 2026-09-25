@@ -10,6 +10,14 @@ export interface AnasLauncherProps {
   unreadCount: number
   reducedMotion: boolean
   onOpen: () => void
+  /**
+   * Starts fetching the code-split AnasPanel chunk ahead of the actual
+   * click, so opening feels instant. Wired to every signal that a visitor
+   * is about to open the panel: hover, keyboard focus, and the earliest
+   * possible pointer/touch event before the click itself fires. Safe to
+   * call repeatedly — the underlying dynamic import is memoized.
+   */
+  onPreload: () => void
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -23,7 +31,7 @@ function clamp(value: number, min: number, max: number): number {
  */
 export const AnasLauncher = forwardRef<HTMLButtonElement, AnasLauncherProps>(
   function AnasLauncher(
-    { panelId, hidden, unreadCount, reducedMotion, onOpen },
+    { panelId, hidden, unreadCount, reducedMotion, onOpen, onPreload },
     ref,
   ) {
     const { t } = useTranslation('chatbot')
@@ -74,10 +82,16 @@ export const AnasLauncher = forwardRef<HTMLButtonElement, AnasLauncherProps>(
           aria-haspopup="dialog"
           aria-controls={panelId}
           onClick={onOpen}
-          onPointerEnter={() => setHovered(true)}
+          onPointerEnter={() => {
+            setHovered(true)
+            onPreload()
+          }}
           onPointerMove={handlePointerMove}
           onPointerLeave={resetPointer}
           onBlur={resetPointer}
+          onFocus={onPreload}
+          onPointerDown={onPreload}
+          onTouchStart={onPreload}
         >
           <AnasHourglass
             size={30}

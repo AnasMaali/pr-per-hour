@@ -71,7 +71,7 @@ final class ChatbotKnowledgeTest extends TestCase
         );
     }
 
-    public function test_knowledge_contains_company_and_leadership_facts(): void
+    public function test_knowledge_contains_company_and_bilingual_leadership_facts(): void
     {
         $context = app(
             PrPerHourKnowledgeBuilder::class,
@@ -88,6 +88,11 @@ final class ChatbotKnowledgeTest extends TestCase
         );
 
         $this->assertStringContainsString(
+            'فاتنة معالي',
+            $context,
+        );
+
+        $this->assertStringContainsString(
             'Founder & Principal Consultant',
             $context,
         );
@@ -98,12 +103,84 @@ final class ChatbotKnowledgeTest extends TestCase
         );
 
         $this->assertStringContainsString(
+            'أنس معالي',
+            $context,
+        );
+
+        $this->assertStringContainsString(
             'Head of Technology',
+            $context,
+        );
+
+        $this->assertStringContainsString(
+            'المؤسس والمستشار الرئيسي',
+            $context,
+        );
+
+        $this->assertStringContainsString(
+            'رئيس قسم التكنولوجيا',
             $context,
         );
     }
 
-    public function test_system_prompt_defines_anas_safely(): void
+    public function test_knowledge_keeps_data_ai_technology_and_training_categories_distinct(): void
+    {
+        $dataAiTechnology = ServiceCategory::factory()->create([
+            'name' => 'Data, AI & Technology',
+            'is_active' => true,
+        ]);
+
+        $training = ServiceCategory::factory()->create([
+            'name' => 'Training & Capacity Building',
+            'is_active' => true,
+        ]);
+
+        foreach ([
+            'Data Analysis & Business Intelligence',
+            'AI Solutions & Automation',
+            'Dashboards & Decision Support',
+            'Software & Digital Solutions',
+            'Technology & AI Consulting',
+        ] as $title) {
+            Service::factory()->create([
+                'category_id' => $dataAiTechnology->id,
+                'title' => $title,
+                'is_active' => true,
+            ]);
+        }
+
+        Service::factory()->create([
+            'category_id' => $training->id,
+            'title' => 'AI in Strategic Communication',
+            'is_active' => true,
+        ]);
+
+        $knowledge = app(PrPerHourKnowledgeBuilder::class)->build();
+
+        $categoriesByName = collect($knowledge['service_categories'])
+            ->keyBy('name');
+
+        $dataAiTitles = collect($categoriesByName['Data, AI & Technology']['services'])
+            ->pluck('title')
+            ->all();
+
+        $this->assertEqualsCanonicalizing([
+            'Data Analysis & Business Intelligence',
+            'AI Solutions & Automation',
+            'Dashboards & Decision Support',
+            'Software & Digital Solutions',
+            'Technology & AI Consulting',
+        ], $dataAiTitles);
+
+        $trainingTitles = collect($categoriesByName['Training & Capacity Building']['services'])
+            ->pluck('title')
+            ->all();
+
+        $this->assertContains('AI in Strategic Communication', $trainingTitles);
+        $this->assertNotContains('AI in Strategic Communication', $dataAiTitles);
+    }
+
+    public function test_system_prompt_defines_pria_ai_safely(): void
     {
         $prompt = app(
             AnasSystemPromptBuilder::class,
@@ -111,6 +188,11 @@ final class ChatbotKnowledgeTest extends TestCase
 
         $this->assertStringContainsString(
             'official AI assistant for PR Per Hour',
+            $prompt,
+        );
+
+        $this->assertStringContainsString(
+            'You are PRIA',
             $prompt,
         );
 
@@ -128,6 +210,85 @@ final class ChatbotKnowledgeTest extends TestCase
             'automatically respond in the language',
             strtolower($prompt),
         );
+    }
+
+    public function test_system_prompt_defines_exact_canonical_names(): void
+    {
+        $prompt = app(AnasSystemPromptBuilder::class)->build();
+
+        $this->assertStringContainsString('أنس معالي', $prompt);
+        $this->assertStringContainsString('فاتنة معالي', $prompt);
+        $this->assertStringContainsString('Anas Maali', $prompt);
+        $this->assertStringContainsString('Fatina Maali', $prompt);
+        $this->assertStringContainsString('never transliterate', strtolower($prompt));
+    }
+
+    public function test_system_prompt_forbids_unprompted_leadership_mentions(): void
+    {
+        $prompt = $this->normalizedPrompt();
+
+        $this->assertStringContainsString(
+            'do not introduce fatina maali or anas maali into a normal service answer',
+            $prompt,
+        );
+    }
+
+    public function test_system_prompt_requires_gender_neutral_arabic(): void
+    {
+        $prompt = $this->normalizedPrompt();
+
+        $this->assertStringContainsString('gender-neutral arabic', $prompt);
+        $this->assertStringContainsString('تودين', $prompt);
+        $this->assertStringContainsString('تفضلين', $prompt);
+        $this->assertStringContainsString('never default to masculine forms either', $prompt);
+    }
+
+    public function test_system_prompt_defines_service_catalog_rules(): void
+    {
+        $prompt = $this->normalizedPrompt();
+
+        $this->assertStringContainsString('service catalog rules', $prompt);
+        $this->assertStringContainsString('never move a service to a different category', $prompt);
+        $this->assertStringContainsString('ai in strategic communication', $prompt);
+    }
+
+    public function test_system_prompt_distinguishes_facts_from_possible_outcomes(): void
+    {
+        $prompt = $this->normalizedPrompt();
+
+        $this->assertStringContainsString('claim calibration', $prompt);
+        $this->assertStringContainsString('known fact', $prompt);
+        $this->assertStringContainsString('possible service outcome', $prompt);
+        $this->assertStringContainsString('hypothetical example', $prompt);
+    }
+
+    public function test_system_prompt_forbids_filler_language_and_repeated_greetings(): void
+    {
+        $prompt = $this->normalizedPrompt();
+
+        $this->assertStringContainsString('no filler', $prompt);
+        $this->assertStringContainsString('أهلاً بك مجدداً', $prompt);
+        $this->assertStringContainsString('يسعدني أن', $prompt);
+    }
+
+    public function test_system_prompt_defines_factual_and_recommendation_answer_structure(): void
+    {
+        $prompt = $this->normalizedPrompt();
+
+        $this->assertStringContainsString('answer structure', $prompt);
+        $this->assertStringContainsString('direct answer -> one useful supporting fact if needed -> stop', $prompt);
+        $this->assertStringContainsString(
+            'primary service -> why it fits -> optional one complementary service -> optional one useful next question',
+            $prompt,
+        );
+    }
+
+    public function test_system_prompt_requires_a_silent_single_call_quality_self_check(): void
+    {
+        $prompt = $this->normalizedPrompt();
+
+        $this->assertStringContainsString('final quality self-check', $prompt);
+        $this->assertStringContainsString('never make a second request to generate a reply', $prompt);
     }
 
     public function test_system_prompt_contains_anti_overclaim_rules(): void
@@ -177,7 +338,12 @@ final class ChatbotKnowledgeTest extends TestCase
         $prompt = $this->normalizedPrompt();
 
         $this->assertStringContainsString(
-            'default to concise',
+            'answer first. explain only what is necessary. stop.',
+            $prompt,
+        );
+
+        $this->assertStringContainsString(
+            'roughly 60-150 words',
             $prompt,
         );
 

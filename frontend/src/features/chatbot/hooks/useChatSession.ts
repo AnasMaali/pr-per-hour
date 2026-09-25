@@ -2,6 +2,8 @@ import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { ApiClientError } from '@/shared/api/errors'
 import { chatbotApi } from '@/features/chatbot/api/chatbotApi'
+import { streamChatMessage } from '@/features/chatbot/api/chatbotStream'
+import { createDeltaBatcher } from '@/features/chatbot/utils/deltaBatcher'
 import {
   chatReducer,
   initialChatState,
@@ -33,6 +35,15 @@ export function useChatSession() {
 
   const [state, dispatch] = useReducer(chatReducer, initialChatState)
   const identityRef = useRef(identity)
+  const activeStreamControllerRef = useRef<AbortController | null>(null)
+
+  // Abort an in-flight stream if the widget is torn down mid-turn — never
+  // leaves a dangling fetch reading a response nobody can see anymore.
+  useEffect(() => {
+    return () => {
+      activeStreamControllerRef.current?.abort()
+    }
+  }, [])
 
   // Never let a guest conversation continue as a different signed-in
   // user's (or a previous user's conversation survive into a new one).
@@ -86,22 +97,60 @@ export function useChatSession() {
     void ensureSession()
   }, [state.phase, state.session, ensureSession])
 
+  /**
+   * Streams the assistant's reply: a thinking state is shown until the
+   * first safe chunk arrives, then one assistant message grows in place
+   * as further chunks stream in. See chatbotStream.ts for the SSE
+   * contract and chatReducer.ts for how deltas/completion are applied.
+   */
   const runSend = useCallback(
-    async (localId: string, text: string, token: string) => {
+    async (userLocalId: string, text: string, token: string) => {
+      const assistantLocalId = nextLocalMessageId()
+
+      activeStreamControllerRef.current?.abort()
+      const controller = new AbortController()
+      activeStreamControllerRef.current = controller
+
+      const batcher = createDeltaBatcher((batched) => {
+        dispatch({
+          type: 'MESSAGE_STREAM_DELTA',
+          userLocalId,
+          assistantLocalId,
+          content: batched,
+        })
+      })
+
       try {
-        const response = await chatbotApi.sendMessage(token, text)
-        dispatch({
-          type: 'MESSAGE_SEND_SUCCESS',
-          localId,
-          userMessage: response.data.message,
-          botMessage: response.data.reply,
-        })
-      } catch (error) {
-        dispatch({
-          type: 'MESSAGE_SEND_ERROR',
-          localId,
-          message: extractErrorMessage(error),
-        })
+        await streamChatMessage(
+          token,
+          text,
+          {
+            onDelta: (content) => batcher.push(content),
+            onDone: (finalMessage) => {
+              batcher.flushNow()
+              dispatch({
+                type: 'MESSAGE_STREAM_DONE',
+                userLocalId,
+                assistantLocalId,
+                finalMessage,
+              })
+            },
+            onError: () => {
+              batcher.cancel()
+              dispatch({
+                type: 'MESSAGE_STREAM_ERROR',
+                userLocalId,
+                assistantLocalId,
+                message: 'network_error',
+              })
+            },
+          },
+          controller.signal,
+        )
+      } finally {
+        if (activeStreamControllerRef.current === controller) {
+          activeStreamControllerRef.current = null
+        }
       }
     },
     [],

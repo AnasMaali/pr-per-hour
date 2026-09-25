@@ -193,4 +193,133 @@ describe('chatReducer', () => {
     expect(state.messages).toHaveLength(1)
     expect(state.messages[0]?.status).toBe('pending')
   })
+
+  // -----------------------------------------------------------------
+  // Streaming
+  // -----------------------------------------------------------------
+
+  it('creates one growing streaming message on the first delta, keeping the thinking state gone', () => {
+    let state = chatReducer(initialChatState, {
+      type: 'MESSAGE_SEND_START',
+      localId: 'user-1',
+      text: 'What services do you offer?',
+    })
+
+    state = chatReducer(state, {
+      type: 'MESSAGE_STREAM_DELTA',
+      userLocalId: 'user-1',
+      assistantLocalId: 'assistant-1',
+      content: 'PR Per Hour offers',
+    })
+
+    expect(state.messages).toHaveLength(2)
+    expect(state.messages[1]).toMatchObject({
+      localId: 'assistant-1',
+      sender: 'bot',
+      message: 'PR Per Hour offers',
+      status: 'streaming',
+    })
+  })
+
+  it('appends successive deltas to the same streaming message without creating duplicates', () => {
+    let state = chatReducer(initialChatState, {
+      type: 'MESSAGE_SEND_START',
+      localId: 'user-1',
+      text: 'Hi',
+    })
+
+    state = chatReducer(state, {
+      type: 'MESSAGE_STREAM_DELTA',
+      userLocalId: 'user-1',
+      assistantLocalId: 'assistant-1',
+      content: 'Hel',
+    })
+    state = chatReducer(state, {
+      type: 'MESSAGE_STREAM_DELTA',
+      userLocalId: 'user-1',
+      assistantLocalId: 'assistant-1',
+      content: 'lo!',
+    })
+
+    expect(state.messages).toHaveLength(2)
+    expect(state.messages[1]?.message).toBe('Hello!')
+    expect(state.messages[1]?.status).toBe('streaming')
+  })
+
+  it('finalizes the streaming message with the authoritative done text and marks both sides sent', () => {
+    let state = chatReducer(initialChatState, {
+      type: 'MESSAGE_SEND_START',
+      localId: 'user-1',
+      text: 'Hi',
+    })
+    state = chatReducer(state, {
+      type: 'MESSAGE_STREAM_DELTA',
+      userLocalId: 'user-1',
+      assistantLocalId: 'assistant-1',
+      content: 'Hel',
+    })
+
+    state = chatReducer(state, {
+      type: 'MESSAGE_STREAM_DONE',
+      userLocalId: 'user-1',
+      assistantLocalId: 'assistant-1',
+      finalMessage: botMessage('Hello there!'),
+    })
+
+    expect(state.send).toBe('idle')
+    expect(state.messages).toHaveLength(2)
+    expect(state.messages[0]).toMatchObject({ localId: 'user-1', status: 'sent' })
+    expect(state.messages[1]).toMatchObject({
+      localId: 'assistant-1',
+      status: 'sent',
+      message: 'Hello there!',
+    })
+  })
+
+  it('creates the assistant message on done even if no delta ever arrived (e.g. an immediate local-fallback reply)', () => {
+    let state = chatReducer(initialChatState, {
+      type: 'MESSAGE_SEND_START',
+      localId: 'user-1',
+      text: 'Hi',
+    })
+
+    state = chatReducer(state, {
+      type: 'MESSAGE_STREAM_DONE',
+      userLocalId: 'user-1',
+      assistantLocalId: 'assistant-1',
+      finalMessage: botMessage('Here is how PR Per Hour can help.'),
+    })
+
+    expect(state.messages).toHaveLength(2)
+    expect(state.messages[1]).toMatchObject({
+      localId: 'assistant-1',
+      status: 'sent',
+      message: 'Here is how PR Per Hour can help.',
+    })
+  })
+
+  it('drops the partial streaming bubble and marks the visitor message failed on a stream error', () => {
+    let state = chatReducer(initialChatState, {
+      type: 'MESSAGE_SEND_START',
+      localId: 'user-1',
+      text: 'Hi',
+    })
+    state = chatReducer(state, {
+      type: 'MESSAGE_STREAM_DELTA',
+      userLocalId: 'user-1',
+      assistantLocalId: 'assistant-1',
+      content: 'Partial answer that never',
+    })
+
+    state = chatReducer(state, {
+      type: 'MESSAGE_STREAM_ERROR',
+      userLocalId: 'user-1',
+      assistantLocalId: 'assistant-1',
+      message: 'network_error',
+    })
+
+    expect(state.send).toBe('error')
+    expect(state.messages).toHaveLength(1)
+    expect(state.messages[0]).toMatchObject({ localId: 'user-1', status: 'failed' })
+  })
 })

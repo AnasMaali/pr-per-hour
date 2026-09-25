@@ -64,12 +64,10 @@ final class PrPerHourKnowledgeBuilder
     public function toPromptContext(): string
     {
         $knowledge = $this->build();
-
         $company = $knowledge['company'];
 
         $lines = [
             'PR PER HOUR KNOWLEDGE',
-            '',
             'Company: '.($company['name'] ?? 'PR Per Hour'),
             'Website: '.($company['website'] ?? ''),
             'Email: '.($company['email'] ?? ''),
@@ -81,36 +79,115 @@ final class PrPerHourKnowledgeBuilder
 
         foreach (($company['leadership'] ?? []) as $leader) {
             $lines[] = sprintf(
-                '- %s — %s',
-                $leader['name'] ?? '',
+                '- %s / %s — %s / %s',
+                $leader['name_en'] ?? '',
+                $leader['name_ar'] ?? '',
                 $leader['role'] ?? '',
+                $leader['role_ar'] ?? '',
             );
 
-            foreach (($leader['expertise'] ?? []) as $expertise) {
-                $lines[] = '  • '.$expertise;
+            $expertise = array_values(
+                array_filter(
+                    (array) ($leader['expertise'] ?? []),
+                    static fn ($value): bool =>
+                        is_string($value)
+                        && trim($value) !== '',
+                ),
+            );
+
+            if ($expertise !== []) {
+                $lines[] = '  Expertise: '.implode(
+                    '; ',
+                    $expertise,
+                );
             }
+        }
+
+        $lines[] = '';
+        $lines[] = 'ORGANIZATIONS WE HAVE WORKED WITH';
+
+        foreach ((array) config('chatbot.worked_with', []) as $organization) {
+            $lines[] = sprintf(
+                '- %s / %s — %s / %s',
+                $organization['name_en'] ?? '',
+                $organization['name_ar'] ?? '',
+                $organization['type_en'] ?? '',
+                $organization['type_ar'] ?? '',
+            );
         }
 
         $lines[] = '';
         $lines[] = 'SERVICES';
 
-        foreach ($knowledge['service_categories'] as $category) {
+        foreach (
+            $knowledge['service_categories']
+            as $category
+        ) {
             $lines[] = '';
             $lines[] = 'Category: '.$category['name'];
 
-            if ($category['description']) {
-                $lines[] = $category['description'];
-            }
-
             foreach ($category['services'] as $service) {
-                $lines[] = '- '.$service['title'];
+                $description = self::compactDescription(
+                    $service['description'] ?? null,
+                );
 
-                if ($service['description']) {
-                    $lines[] = '  '.$service['description'];
+                $line = '- '.$service['title'];
+
+                if ($description !== null) {
+                    $line .= ': '.$description;
                 }
+
+                $lines[] = $line;
             }
         }
 
         return implode("\n", $lines);
+    }
+
+    private static function compactDescription(
+        ?string $description,
+    ): ?string {
+        if ($description === null) {
+            return null;
+        }
+
+        $clean = trim(
+            preg_replace(
+                '/\s+/u',
+                ' ',
+                $description,
+            ) ?? $description,
+        );
+
+        if ($clean === '') {
+            return null;
+        }
+
+        /*
+         * One sentence is enough for model routing/recommendation while
+         * preserving the authoritative meaning from the database.
+         */
+        if (
+            preg_match(
+                '/^(.{1,180}?[.!?])(?:\s|$)/u',
+                $clean,
+                $match,
+            )
+        ) {
+            return trim($match[1]);
+        }
+
+        if (mb_strlen($clean, 'UTF-8') <= 180) {
+            return $clean;
+        }
+
+        return rtrim(
+            mb_substr(
+                $clean,
+                0,
+                177,
+                'UTF-8',
+            ),
+        ).'...';
     }
 }

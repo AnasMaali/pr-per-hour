@@ -13,15 +13,16 @@ use App\Features\Chatbot\Providers\FallbackChatProvider;
 use App\Features\Chatbot\Support\AnasResponseQualityGuard;
 use App\Features\Chatbot\Support\AnasSystemPromptBuilder;
 use App\Features\Chatbot\Support\ChatHistoryBuilder;
+use App\Features\Chatbot\Support\PrPerHourSmartResponder;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Orchestrates one visitor/client chat turn:
  * persist the incoming message, ask the configured AI provider for a
  * reply (outside of any database transaction), run it through the
- * deterministic quality guard, then persist Anas's reply.
+ * deterministic quality guard, then persist PRIA's reply.
  *
- * Exactly one external AI generation call happens per turn. A provider
+ * At most one external AI generation call happens per turn. Authoritative first-party questions bypass the AI provider entirely. A provider
  * failure never loses the visitor's message, because ChatProviderManager
  * guarantees a safe fallback reply, and a quality-guard rejection never
  * reaches the visitor, because the guard either repairs the text locally
@@ -36,6 +37,7 @@ final readonly class HandleChatTurn
         private AnasSystemPromptBuilder $systemPromptBuilder,
         private ChatProvider $provider,
         private AnasResponseQualityGuard $qualityGuard,
+        private PrPerHourSmartResponder $smartResponder,
         private FallbackChatProvider $fallbackProvider,
     ) {}
 
@@ -54,6 +56,8 @@ final readonly class HandleChatTurn
             model: (string) config('chatbot.ai.model', ''),
             maxOutputTokens: (int) config('chatbot.ai.max_output_tokens', 500),
             timeoutSeconds: (int) config('chatbot.ai.timeout_seconds', 10),
+            temperature: (float) config('chatbot.ai.temperature', 0.7),
+            topP: (float) config('chatbot.ai.top_p', 0.8),
         );
 
         $replyText = $this->generateQualityCheckedReply($providerRequest);
@@ -64,13 +68,39 @@ final readonly class HandleChatTurn
     }
 
     /**
-     * One provider call, then the deterministic quality guard. If the
+     * An authoritative local fast-path first; otherwise one provider call, then the deterministic quality guard. If the
      * guard can't make the text safe on its own, the reply is replaced
      * with FallbackChatProvider's local, conversation-aware response —
      * never a second call to the AI provider.
      */
     private function generateQualityCheckedReply(ChatProviderRequest $providerRequest): string
     {
+        $authoritative = $this->smartResponder->respondAuthoritatively(
+            $providerRequest,
+            FallbackChatProvider::messageLooksArabic($providerRequest),
+        );
+
+        if ($authoritative !== null) {
+            $quality = $this->qualityGuard->evaluate($authoritative);
+
+            if ($quality->accepted) {
+                return $quality->text;
+            }
+
+            /*
+             * This should be exceptionally rare because the authoritative
+             * responder is deterministic first-party code, but keep the
+             * same local safety backstop as every other reply path.
+             */
+            Log::warning('Authoritative PRIA reply failed quality guard; using local fallback.', [
+                'issues' => $quality->issues,
+            ]);
+
+            return $this->fallbackProvider
+                ->generate($providerRequest)
+                ->content;
+        }
+
         $draft = $this->provider->generate($providerRequest);
         $quality = $this->qualityGuard->evaluate($draft->content);
 
@@ -78,7 +108,7 @@ final readonly class HandleChatTurn
             return $quality->text;
         }
 
-        Log::warning('Anas response failed quality guard; using local fallback.', [
+        Log::warning('PRIA response failed quality guard; using local fallback.', [
             'issues' => $quality->issues,
             'provider' => $draft->provider,
             'model' => $draft->model,

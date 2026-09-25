@@ -61,6 +61,24 @@ export type ChatAction =
     }
   | { type: 'MESSAGE_SEND_ERROR'; localId: string; message: string }
   | { type: 'MESSAGE_RETRY'; localId: string }
+  | {
+      type: 'MESSAGE_STREAM_DELTA'
+      userLocalId: string
+      assistantLocalId: string
+      content: string
+    }
+  | {
+      type: 'MESSAGE_STREAM_DONE'
+      userLocalId: string
+      assistantLocalId: string
+      finalMessage: ChatMessageDto
+    }
+  | {
+      type: 'MESSAGE_STREAM_ERROR'
+      userLocalId: string
+      assistantLocalId: string
+      message: string
+    }
 
 function toViewModel(
   dto: ChatMessageDto,
@@ -188,6 +206,94 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
             ? { ...entry, status: 'pending' }
             : entry,
         ),
+      }
+
+    // A safe text fragment arrived. The growing assistant message is
+    // created lazily on its *first* fragment — not on MESSAGE_SEND_START —
+    // so the thinking indicator stays visible until real content exists,
+    // matching the "thinking -> first chunk -> message appears" UX.
+    case 'MESSAGE_STREAM_DELTA': {
+      const index = state.messages.findIndex(
+        (entry) => entry.localId === action.assistantLocalId,
+      )
+
+      if (index === -1) {
+        return {
+          ...state,
+          messages: [
+            ...state.messages,
+            {
+              localId: action.assistantLocalId,
+              sender: 'bot',
+              message: action.content,
+              createdAt: null,
+              status: 'streaming',
+            },
+          ],
+        }
+      }
+
+      const messages = state.messages.slice()
+      messages[index] = {
+        ...messages[index]!,
+        message: messages[index]!.message + action.content,
+      }
+
+      return { ...state, messages }
+    }
+
+    // Authoritative completion: the assistant message's content is
+    // *replaced* with finalMessage.message (not appended to), since the
+    // backend's final quality pass can differ slightly from the raw
+    // concatenation of streamed deltas — see HandleStreamingChatTurn. If
+    // no delta ever created the assistant message (e.g. an immediate
+    // local-fallback reply with no incremental deltas), it's created here.
+    case 'MESSAGE_STREAM_DONE': {
+      let sawAssistantMessage = false
+
+      const messages = state.messages.map((entry) => {
+        if (entry.localId === action.userLocalId) {
+          return { ...entry, status: 'sent' as const }
+        }
+        if (entry.localId === action.assistantLocalId) {
+          sawAssistantMessage = true
+          return toViewModel(action.finalMessage, action.assistantLocalId, 'sent')
+        }
+        return entry
+      })
+
+      const finalMessages = sawAssistantMessage
+        ? messages
+        : [...messages, toViewModel(action.finalMessage, action.assistantLocalId, 'sent')]
+
+      const closing = state.phase === 'closed' || state.phase === 'closing'
+
+      return {
+        ...state,
+        send: 'idle',
+        sendError: null,
+        messages: finalMessages,
+        unread: closing ? state.unread + 1 : state.unread,
+      }
+    }
+
+    case 'MESSAGE_STREAM_ERROR':
+      return {
+        ...state,
+        send: 'error',
+        sendError: action.message,
+        // Drop any partial streaming bubble — there is no authoritative
+        // final text for it, so it can't be left in a permanent
+        // "streaming" state. The visitor message is marked failed so the
+        // existing retry affordance picks it up, exactly like a
+        // non-streaming send failure.
+        messages: state.messages
+          .filter((entry) => entry.localId !== action.assistantLocalId)
+          .map((entry) =>
+            entry.localId === action.userLocalId
+              ? { ...entry, status: 'failed' }
+              : entry,
+          ),
       }
 
     default:

@@ -6,7 +6,7 @@ import { AnasComposer } from '@/features/chatbot/components/AnasComposer'
 import { CHAT_MESSAGE_MAX_LENGTH } from '@/features/chatbot/types/chatbot.types'
 
 function getTextarea(): HTMLTextAreaElement {
-  return screen.getByLabelText('Message Anas') as HTMLTextAreaElement
+  return screen.getByLabelText('Message PRIA') as HTMLTextAreaElement
 }
 
 describe('AnasComposer', () => {

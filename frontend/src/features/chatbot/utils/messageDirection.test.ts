@@ -16,8 +16,8 @@ describe('detectMessageDirection', () => {
     })
   })
 
-  it('stays rtl/ar for Arabic text containing the brand name "Anas"', () => {
-    const message = 'أهلاً! أنا Anas، مساعدك في PR Per Hour.'
+  it('stays rtl/ar for Arabic text containing the brand name "PRIA"', () => {
+    const message = 'أهلاً! أنا PRIA، مساعدك في PR Per Hour.'
     expect(detectMessageDirection(message)).toEqual({ dir: 'rtl', lang: 'ar' })
   })
 
@@ -58,7 +58,7 @@ describe('detectMessageDirection', () => {
 
   it('picks the predominant script for genuinely mixed content', () => {
     const mostlyArabic =
-      'نص عربي طويل يشرح الخدمة المطلوبة بالتفصيل مع بعض الكلمات Anas PR فقط.'
+      'نص عربي طويل يشرح الخدمة المطلوبة بالتفصيل مع بعض الكلمات PRIA PR فقط.'
     const mostlyEnglish =
       'A long English explanation of the service with only a couple of Arabic words مرحبا شكرا.'
 
@@ -68,7 +68,7 @@ describe('detectMessageDirection', () => {
 
   it('excludes URLs and email addresses from the script count so they never flip a mostly-Arabic message to English', () => {
     const message =
-      'أهلاً! أنا Anas من PR Per Hour. يمكنك زيارة ' +
+      'أهلاً! أنا PRIA من PR Per Hour. يمكنك زيارة ' +
       'https://prperhour.com/services/strategic-communication ' +
       'أو مراسلتنا عبر info@prperhour.com وسيسعدنا مساعدتك.'
 

@@ -39,7 +39,7 @@ export interface StartConversationPayload {
  * Client-side view model. A message rendered in the transcript, whether it
  * is confirmed by the server or still an optimistic local echo.
  */
-export type ChatMessageDeliveryStatus = 'sent' | 'pending' | 'failed'
+export type ChatMessageDeliveryStatus = 'sent' | 'pending' | 'failed' | 'streaming'
 
 export interface ChatMessageViewModel {
   /** Stable React key; never a database ID. */

@@ -20,8 +20,24 @@ export function AnasConversation({
   onRetry,
 }: AnasConversationProps) {
   const { t } = useTranslation('chatbot')
+
+  // Re-measures scroll position not just when a message is added/removed,
+  // but as a streaming message's content grows in place — otherwise the
+  // effect never re-fires while text streams into an existing bubble.
+  const totalContentLength = messages.reduce(
+    (total, message) => total + message.message.length,
+    0,
+  )
   const { containerRef, hasNewBelow, scrollToBottom } = useSmartScroll<HTMLDivElement>(
-    `${messages.length}:${sendStatus}`,
+    `${messages.length}:${sendStatus}:${totalContentLength}`,
+  )
+
+  // Once a streaming assistant message exists, its growing content *is*
+  // the "thinking" feedback — the separate typing indicator would
+  // otherwise linger for the whole stream, since sendStatus stays
+  // 'pending' until the turn fully completes.
+  const hasStreamingMessage = messages.some(
+    (message) => message.status === 'streaming',
   )
 
   return (
@@ -46,7 +62,7 @@ export function AnasConversation({
           />
         ))}
 
-        {sendStatus === 'pending' ? (
+        {sendStatus === 'pending' && !hasStreamingMessage ? (
           <AnasTypingIndicator reducedMotion={reducedMotion} />
         ) : null}
       </div>
